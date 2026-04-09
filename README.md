@@ -31,12 +31,14 @@ Hay que descargarlos desde la Asset Store de Unity e importarlos al proyecto.
 - Autor: **3DRT**
 - Es gratuito
 - Importar todo el paquete al proyecto
+- Link: https://assetstore.unity.com/packages/3d/vehicles/space/star-sparrow-modular-spaceship-73167?srsltid=AfmBOoqV3ANyh_PusS-NRw5pqmKIwBxaIjEYdWSCVIyabQHT_86VyrD0
 
 ### 2. Vibrant 4K Starfield Skybox Pack (el fondo de estrellas)
 - Buscar en la Asset Store: **"Vibrant 4K Starfield Skybox Pack"**
 - Autor: **Parallel Cascades**
 - Es gratuito
 - Importar todo el paquete al proyecto
+- link: https://assetstore.unity.com/packages/2d/textures-materials/sky/vibrant-4k-starfield-skybox-pack-292597?srsltid=AfmBOopoPwQzmiRo7NWby8eegBs45qjStM47CFdAoZFFB7BKrkkWWZ9V
 
 > Sin estos dos assets el proyecto abre pero la nave no se ve
 > y el fondo queda negro o en color solido.
