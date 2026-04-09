@@ -1,0 +1,43 @@
+# ── Carpetas auto-generadas por Unity (no se suben nunca) ────────────────────
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Bb]uild/
+[Bb]uilds/
+UserSettings/
+MemoryCaptures/
+
+# ── Archivos de sistema operativo ────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDEs y editores ───────────────────────────────────────────────────────────
+.vs/
+.idea/
+*.csproj
+*.sln
+*.user
+*.suo
+
+# ── Assets de terceros (descargar desde la Asset Store — ver README) ─────────
+Assets/StarSparrow/
+Assets/StarSparrow.meta
+Assets/BreakableAsteroids/
+Assets/BreakableAsteroids.meta
+Assets/ParallelCascades/
+Assets/ParallelCascades.meta
+Assets/DinV/
+Assets/DinV.meta
+Assets/Asteroids/
+Assets/Asteroids.meta
+
+# ── Herramienta MCP (uso interno de desarrollo, no parte del juego) ───────────
+mcp-server/
+.mcp.json
+Assets/Editor/UnityMCPServer.cs
+Assets/Editor/UnityMCPServer.cs.meta
+
+# ── Configuracion local del editor de codigo ─────────────────────────────────
+.vscode/
