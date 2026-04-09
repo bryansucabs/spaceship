@@ -191,3 +191,45 @@ Assets/
 - El tunel esta pre-construido en Edit Mode para que se vea antes de presionar Play
 - Los limites de movimiento de la nave se corrigen automaticamente al iniciar Play
 - El GameObject **AsteroidSpawner** que puede aparecer en la Hierarchy puede borrarse, no se usa
+
+
+# Segunda Parte (conectar camara con juego)
+
+## 2. entorno virtual
+sudo apt install python3-venv python3-pip
+### 2.1 crear carpeta donde se colocara en entorno virtual
+mkdir ~/ProyectoNave && cd ~/ProyectoNave
+python3 -m venv venv
+
+### 2.2 activar entorno virtual, hay dos formas
+a) source venv/bin/activate
+b) source ~/ProyectoNave/venv/bin/activate
+
+### 2.3 instalar librerias dentro del entorno virtual
+pip install opencv-python numpy
+pip install mediapipe==0.10.14
+
+## 3 correr el programa
+python vision_pies.py
+
+###3.1 programa con accesorio verde para acelerar y azul para izquierdo
+cd ProyectoNave
+python vp-v2.py
+
+## Conectar todo en el Inspector
+
+- Selecciona tu objeto Nave (o StarSparrow, el que estés usando) en la jerarquía de Unity.
+- Arrastra el nuevo script UDPReceiver desde tu carpeta y suéltalo sobre el Inspector de la Nave para añadírselo como componente.
+- Ahora, en la Nave, busca el componente Ship Controller, verás que tiene una casilla vacía llamada Receptor UDP.
+- Como el UDPReceiver ahora vive en la misma Nave, solo haz clic izquierdo en el título del componente UDPReceiver, arrástralo y suéltalo dentro de esa casilla vacía del Ship Controller.
+
+¡Eso es todo! Guarda tu escena (Ctrl + S). Primero ejecuta tu script de Python (python vp-v2.py) desde tu terminal de Ubuntu y luego dale al botón de Play en Unity. Tu pie ahora será oficialmente el motor de tu nave.
+
+## correr todo
+cd ProyectoNave && source venv/bin/activate && python vp-v2.py
+- Lo primero que hace es ejecutar el programa de la camara con python vp-v2.py
+- Luego se ejecuta el juego en linux
+- Para fjar el tapete se te pediran 4 puntos, comienzas por la izquierda-inferior, luego derecha inferior, derecha superior y finalmente izquierda superior
+- necesitas algo verde en el pie para que lo detecte
+
+  
