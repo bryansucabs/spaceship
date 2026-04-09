@@ -208,6 +208,7 @@ b) source ~/ProyectoNave/venv/bin/activate
 
 ### 2.3 instalar librerias dentro del entorno virtual
 pip install opencv-python numpy
+
 pip install mediapipe==0.10.14
 
 ## Conectar todo en el Inspector
