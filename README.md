@@ -203,18 +203,12 @@ python3 -m venv venv
 
 ### 2.2 activar entorno virtual, hay dos formas
 a) source venv/bin/activate
+
 b) source ~/ProyectoNave/venv/bin/activate
 
 ### 2.3 instalar librerias dentro del entorno virtual
 pip install opencv-python numpy
 pip install mediapipe==0.10.14
-
-## 3 correr el programa
-python vision_pies.py
-
-###3.1 programa con accesorio verde para acelerar y azul para izquierdo
-cd ProyectoNave
-python vp-v2.py
 
 ## Conectar todo en el Inspector
 
@@ -223,7 +217,7 @@ python vp-v2.py
 - Ahora, en la Nave, busca el componente Ship Controller, verás que tiene una casilla vacía llamada Receptor UDP.
 - Como el UDPReceiver ahora vive en la misma Nave, solo haz clic izquierdo en el título del componente UDPReceiver, arrástralo y suéltalo dentro de esa casilla vacía del Ship Controller.
 
-¡Eso es todo! Guarda tu escena (Ctrl + S). Primero ejecuta tu script de Python (python vp-v2.py) desde tu terminal de Ubuntu y luego dale al botón de Play en Unity. Tu pie ahora será oficialmente el motor de tu nave.
+¡Eso es todo! Guarda tu escena (Ctrl + S). Primero ejecuta tu script de Python (python vp-v2.py) desde tu terminal de Ubuntu y luego dale al botón de Play en Unity.
 
 ## correr todo
 cd ProyectoNave && source venv/bin/activate && python vp-v2.py
