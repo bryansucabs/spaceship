@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using UnityEngine.InputSystem;
 public class ShipFlightController : MonoBehaviour
 {
     public UDPGyro udpGyro;
@@ -61,7 +61,7 @@ public class ShipFlightController : MonoBehaviour
         }
 
 
-        transform.Translate(Vector3.forward * velocidadAvance * Time.deltaTime);
+        transform.Translate(Vector3.forward * 50 * Time.deltaTime);
 
         // APLICAR GIRO 
         // Arriba/Abajo (Pitch)
@@ -97,7 +97,10 @@ public class ShipFlightController : MonoBehaviour
         }
 
         // Tecla para recalibrar tu centro cómodo en cualquier momento
-        if (Input.GetKeyDown(KeyCode.Space)) Calibrate();
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            Calibrate();
+        }
     }
 
     public void Calibrate()
