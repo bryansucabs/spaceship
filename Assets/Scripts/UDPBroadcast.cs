@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Globalization;
 
 public class UDPManager : MonoBehaviour
 {
@@ -68,6 +69,7 @@ public class UDPManager : MonoBehaviour
             try {
                 byte[] data = udpClient.Receive(ref remoteEP);
                 string text = Encoding.UTF8.GetString(data);
+                //Debug.Log("Recibido: " + text);
 
                 // Lógica de detección de IP del móvil
                 if (text == "END") {
@@ -77,6 +79,7 @@ public class UDPManager : MonoBehaviour
                 }
                 // Lógica de Quaternions
                 else if (text.Contains("|")) {
+                    //Debug.Log("Recibido quaternion: " + text);
                     ParseQuaternion(text);
                 }
             } catch { /* Evitamos spam de errores al cerrar */ }
@@ -88,12 +91,16 @@ public class UDPManager : MonoBehaviour
         string[] v = text.Split('|');
         if (v.Length == 4) {
             lock (lockObj) {
-                rotationFromMobile = new Quaternion(
-                    float.Parse(v[0]), 
-                    float.Parse(v[1]), 
-                    float.Parse(v[2]), 
-                    float.Parse(v[3])
-                );
+
+                // Extraemos los valores de forma segura sin importar el idioma de la PC
+                float x = float.Parse(v[0], CultureInfo.InvariantCulture);
+                float y = float.Parse(v[1], CultureInfo.InvariantCulture);
+                float z = float.Parse(v[2], CultureInfo.InvariantCulture);
+                float w = float.Parse(v[3], CultureInfo.InvariantCulture);
+
+                // Creamos el Quaternion y aplicamos la corrección de Android a Unity (-z, -w) directamente.
+                // Esto nos ahorra crear la variable "rotacionCruda" y hace el código más limpio y rápido.
+                rotationFromMobile = new Quaternion(x, y, -z, -w);
             }
         }
     }
