@@ -12,7 +12,7 @@ CAMERA_INDEX = 2
 
 # 2. Red: Dirección IP y Puerto de Unity.
 UNITY_IP = "127.0.0.1" 
-UNITY_PORT = 5001
+UNITY_PORT = 5002
 
 # 3. Matemáticas de Control: V = k * (e^(alpha*d) - 1).
 K_COEFF = 50.0      # Multiplicador base (Velocidad máxima).

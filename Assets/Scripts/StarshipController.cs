@@ -5,6 +5,17 @@ public class StarshipController : MonoBehaviour
 {
     public Quaternion rotacionRecibidaCelular = Quaternion.identity;
 
+    // ==========================================
+    // --- ¡NUEVO! CONFIGURACIÓN DE VISIÓN ---
+    // ==========================================
+    [Header("Control por Visión (Python)")]
+    [Tooltip("Arrastra aquí el objeto que tiene el script UDPReceiver")]
+    public UDPReceiver receptorUDP; 
+    
+    [Tooltip("Ajusta este valor si la nave va muy lento o muy rápido")]
+    public float multiplicadorVelocidadZ = 1.0f; 
+    // ==========================================
+
     [Header("Configuración de Vuelo")]
     public float speed = 40f;
     public float turnSpeed = 90f;
@@ -32,7 +43,7 @@ public class StarshipController : MonoBehaviour
 
         // --- 1. LEER Y CALCULAR EL CELULAR ---
         Quaternion rawRot = rotacionRecibidaCelular;
-        Quaternion currentDeviceRot = new Quaternion(rawRot.x, rawRot.y, rawRot.z, rawRot.w);
+        Quaternion currentDeviceRot = new Quaternion(rawRot.x, rawRot.z, rawRot.y, rawRot.w);
 
         if (!isCalibrated && currentDeviceRot != Quaternion.identity) 
         {
@@ -43,7 +54,7 @@ public class StarshipController : MonoBehaviour
         Quaternion relativeRot = Quaternion.Inverse(calibrationOffset) * currentDeviceRot;
         Vector3 tiltAngles = relativeRot.eulerAngles;
         float pitchInput = NormalizeAngle(tiltAngles.x); 
-        float rollInput = NormalizeAngle(tiltAngles.y);  
+        float rollInput = NormalizeAngle(tiltAngles.z);  
 
         if (Mathf.Abs(pitchInput) < deadzoneAngle) pitchInput = 0;
         if (Mathf.Abs(rollInput) < deadzoneAngle) rollInput = 0;
@@ -53,7 +64,22 @@ public class StarshipController : MonoBehaviour
 
         // --- 2. MOVIMIENTO (MOTOR DE FÍSICAS) ---
         // rb.MovePosition mueve la nave, pero la DETIENE si hay una pared poligonal
-        Vector3 avance = transform.forward * speed * Time.fixedDeltaTime;
+        //Vector3 avance = transform.forward * speed * Time.fixedDeltaTime;
+        //rb.MovePosition(rb.position + avance);
+        float velocidadActual = 0f;
+
+        if (receptorUDP != null)
+        {
+            // Leemos accel y brake directamente del receptor
+            float accel = receptorUDP.currentData.accel;
+            float brake = receptorUDP.currentData.brake;
+
+            // La velocidad neta es aceleración menos frenado, multiplicada por tu factor
+            velocidadActual = (accel - brake) * multiplicadorVelocidadZ;
+            velocidadActual = Mathf.Max(0f, velocidadActual); // No retroceder
+        }
+
+        Vector3 avance = transform.forward * velocidadActual * Time.fixedDeltaTime;
         rb.MovePosition(rb.position + avance);
 
 
@@ -88,7 +114,7 @@ public class StarshipController : MonoBehaviour
     public void Calibrate()
     {
         Quaternion rawRot = rotacionRecibidaCelular;
-        calibrationOffset = new Quaternion(rawRot.x, rawRot.y, rawRot.z, rawRot.w);
+        calibrationOffset = new Quaternion(rawRot.x, rawRot.z, rawRot.y, rawRot.w);
         Debug.Log("Nave Calibrada al centro cómodo actual");
     }
 

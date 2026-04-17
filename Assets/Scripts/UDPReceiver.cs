@@ -8,21 +8,21 @@ public class UDPReceiver : MonoBehaviour
 {
     Thread receiveThread;
     UdpClient client;
-    public int port = 5001;
+    public int port = 5002;
 
-    [Header("Referencias")]
-    public EngineController engineController; // Arrastra el script de la nave aquí
-    public ControlData currentData;
-    // Usamos esto para pasar datos de un hilo a otro de forma segura
-    private float lastAccelReceived;
+    [Header("Datos Recibidos (Solo Lectura)")]
+    public ControlData currentData = new ControlData();
+
+    // Lock para pasar datos entre hilos de forma segura
     private readonly object lockObject = new object();
+    private ControlData pendingData = new ControlData();
 
     void Start()
     {
-        // Iniciamos el hilo secundario para que no bloquee Unity
         receiveThread = new Thread(new ThreadStart(ReceiveData));
         receiveThread.IsBackground = true;
         receiveThread.Start();
+        Debug.Log($"UDPReceiver escuchando en puerto {port}");
     }
 
     private void ReceiveData()
@@ -33,15 +33,15 @@ public class UDPReceiver : MonoBehaviour
             try
             {
                 IPEndPoint anyIP = new IPEndPoint(IPAddress.Any, 0);
-                byte[] data = client.Receive(ref anyIP); // Esta línea espera el paquete
-                
-                string text = Encoding.UTF8.GetString(data);
-                ControlData currentData = JsonUtility.FromJson<ControlData>(text);
+                byte[] data = client.Receive(ref anyIP);
 
-                // Guardamos el valor en una variable compartida de forma segura
+                string text = Encoding.UTF8.GetString(data);
+                ControlData parsed = JsonUtility.FromJson<ControlData>(text);
+
+                // Guardamos en pendingData (hilo secundario) de forma segura
                 lock (lockObject)
                 {
-                    lastAccelReceived = currentData.accel;
+                    pendingData = parsed;
                 }
             }
             catch (System.Exception err)
@@ -53,20 +53,17 @@ public class UDPReceiver : MonoBehaviour
 
     void Update()
     {
-        // En el hilo principal (Update), le pasamos el dato a la nave
+        // Pasamos los datos al hilo principal de Unity
         lock (lockObject)
         {
-            if (engineController != null)
-            {
-                engineController.ActualizarMotores(lastAccelReceived);
-            }
+            currentData = pendingData;
         }
     }
 
     void OnApplicationQuit()
     {
         if (receiveThread != null) receiveThread.Abort();
-        client.Close();
+        if (client != null) client.Close();
     }
 }
 
