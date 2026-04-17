@@ -41,3 +41,4 @@ Assets/Editor/UnityMCPServer.cs.meta
 
 # ── Configuracion local del editor de codigo ─────────────────────────────────
 .vscode/
+venv/
