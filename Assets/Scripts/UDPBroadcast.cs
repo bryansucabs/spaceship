@@ -75,6 +75,7 @@ public class UDPManager : MonoBehaviour
                 if (text == "END") {
                     ipCelular = remoteEP.Address.ToString();
                     Debug.Log("Móvil detectado en: " + ipCelular);
+                    InstanceManagerPC.instance.ip = ipCelular;
                     conectado = true;
                 }
                 // Lógica de Quaternions
@@ -100,7 +101,7 @@ public class UDPManager : MonoBehaviour
 
                 // Creamos el Quaternion y aplicamos la corrección de Android a Unity (-z, -w) directamente.
                 // Esto nos ahorra crear la variable "rotacionCruda" y hace el código más limpio y rápido.
-                rotationFromMobile = new Quaternion(x, y, -z, -w);
+                rotationFromMobile = new Quaternion(x, y, z, -w);
             }
         }
     }

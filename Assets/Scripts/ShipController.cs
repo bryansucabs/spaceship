@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody))] 
 public class ShipController : MonoBehaviour
 {
+
     // ==========================================
     // --- ¡NUEVO! CONFIGURACIÓN DE VISIÓN ---
     // ==========================================

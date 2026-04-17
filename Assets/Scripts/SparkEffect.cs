@@ -6,7 +6,7 @@ using UnityEngine;
 // Se llama desde TunnelWall cada vez que la nave toca una pared u obstaculo.
 public static class SparkEffect
 {
-    // Genera chispas en la posicion dada, orientadas segun la normal de la pared
+    // Genera chispas en la posicion dada, orientadas segun la normal de la pared   
     // position: punto exacto donde la nave toco la pared
     // wallNormal: direccion perpendicular a la pared, apuntando hacia adentro del tunel
     public static void Spawn(Vector3 position, Vector3 wallNormal)
@@ -15,8 +15,11 @@ public static class SparkEffect
         var go = new GameObject("Sparks");
         go.transform.position = position;
 
+
+
         // Agregar el sistema de particulas al objeto
         var ps = go.AddComponent<ParticleSystem>();
+        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
         // Rotar el objeto para que las chispas salgan alejandose de la pared
         // LookRotation apunta el eje Z del objeto en la direccion dada

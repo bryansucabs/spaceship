@@ -19,6 +19,7 @@ public class EngineController : MonoBehaviour
         // Configuración automática para vuelo espacial
         rb.useGravity = false;
         rb.linearDamping = 0; // Manejamos la fricción por código para más control
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
     }
 
     // --- ESTE MÉTODO RECIBE EL JSON DE PYTHON ---
@@ -37,8 +38,8 @@ public class EngineController : MonoBehaviour
         
         if (debug)
         {
-            empujeDeseado = 0.1f;
-            empujeSuavizado = 0.1f;
+            empujeDeseado = 0.01f;
+            empujeSuavizado = 0.01f;
 
         }
         else    

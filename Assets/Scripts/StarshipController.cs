@@ -1,96 +1,156 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.InputSystem; 
 
-[RequireComponent(typeof(Rigidbody))]
+// ShipController.cs
+// Controla el movimiento de la nave del jugador dentro del túnel usando un celular.
+// El movimiento hacia adelante (eje Z) DEBE ser controlado por otro script.
+// El jugador inclina el celular (Pitch y Roll) para moverse en X e Y.
+[RequireComponent(typeof(Rigidbody))] 
 public class StarshipController : MonoBehaviour
 {
+    [Header("Conexión con el Celular (Android GameRotationVector)")]
     [HideInInspector] public Quaternion rotacionRecibidaCelular = Quaternion.identity;
+    
+    [Tooltip("Obligatorio: Activa esto si el usuario sostiene el celular en Horizontal (Volante). Si es Vertical (Control Remoto), desactívalo.")]
+    public bool celularEnModoLandscape = true;
 
-    [Header("Sensibilidad Acrobática (3 Ejes Separados)")]
-    [Tooltip("Inclinar adelante/atrás: Sube y baja la nave.")]
-    public float fuerzaSubirBajar = 15f;
-    [Tooltip("Giro plano (brújula): Apunta la nave a izquierda o derecha.")]
-    public float fuerzaGiroLateral = 15f;
-    [Tooltip("Volante: Rota las alas sobre el propio eje de la nave (¡Para pasar por rejillas!).")]
-    public float fuerzaRotarAlas = 25f;
-
-    [Header("Control en Tuberías (Deslizamiento)")]
-    [Tooltip("Al girar a los lados, la nave también se resbala físicamente en esa dirección para esquivar mejor.")]
-    public float fuerzaDeslizamientoLateral = 10f;
-
-    [Header("Filtros Humanos")]
-    [Tooltip("Grados que puedes mover las manos sin que la nave reaccione (evita temblores).")]
+    [Tooltip("Grados de inclinación del celular para alcanzar la velocidad máxima (Ej: 45 grados).")]
+    public float limiteInclinacion = 40f;
+    [Tooltip("Grados en el centro donde la nave no se moverá (evita temblores).")]
     public float zonaMuerta = 5f;
-    [Tooltip("Suavidad de la respuesta. Un valor más alto hace la nave más pesada y cinematográfica.")]
-    public float suavizado = 8f;
+    
+    [Tooltip("Invierte los controles si sientes que van al revés al probar en el móvil.")]
+    public bool invertirArribaAbajo = false;
+    public bool invertirIzquierdaDerecha = false;
 
-    private Rigidbody rb;
+    [Header("Ajustes de Movimiento Lateral")]
+    // Velocidad de movimiento lateral (izquierda, derecha, arriba, abajo)
+    public float LATERAL_SPEED = 40f;
+
+    // Ángulo máximo de inclinación de las alas al moverse horizontalmente
+    public float ROLL_AMOUNT   = 28f;
+    // Velocidad a la que las alas se inclinan y vuelven al centro
+    public float ROLL_SPEED    = 6f;
+
+    // Ángulo máximo de inclinación de la nariz al moverse verticalmente
+    public float PITCH_AMOUNT  = 20f;
+    // Velocidad a la que la nariz sube/baja y vuelve al centro
+    public float PITCH_SPEED   = 6f;
+
+    // Límites de movimiento en X e Y — sobreescritos por TunnelGenerator al iniciar
+    [HideInInspector] public float xLimit = 47.5f; 
+    [HideInInspector] public float yLimit = 53.0f; 
+
+    private Rigidbody _rb;
     private Quaternion calibracionCentro = Quaternion.identity;
     private bool estaCalibrado = false;
 
-    // Variables de inercia
-    private float inputPitch = 0f;
-    private float inputYaw = 0f;
-    private float inputRoll = 0f;
+    // Valores actuales de inclinación visual (van interpolando suavemente)
+    private float _roll;  // inclinación de alas (eje Z)
+    private float _pitch; // inclinación de nariz (eje X)
 
-    void Start()
+    void Awake()
     {
-        rb = GetComponent<Rigidbody>();
-        
-        // Físicas óptimas para vuelo libre acrobático
-        rb.mass = 1f;
-        rb.useGravity = false;
-        rb.linearDamping = 2f;  // Frena el deslizamiento al soltar
-        rb.angularDamping = 4f; // Frena la rotación rápidamente para no quedar dando vueltas
+        // Siempre corregir los límites al valor correcto del túnel actual
+        xLimit = 49.32f; // 54 - ancho real del ala (4.68u)
+        yLimit = 53.26f; // 54 - alto real de la nave (0.74u)
 
+        _rb = GetComponent<Rigidbody>();
+        _rb.useGravity    = false;            // la nave no cae por gravedad
+        
+        // ¡MODIFICACIÓN CLAVE! Debe ser false para que el EngineController pueda empujarla
+        _rb.isKinematic   = false;            
+        
+        _rb.interpolation = RigidbodyInterpolation.Interpolate; // evita temblor visual
+
+        // Paso 1: destruir todos los colliders originales del prefab
+        foreach (var col in GetComponentsInChildren<Collider>())
+            Destroy(col);
+
+        // Paso 2: destruir GameObjects hijo llamados "Hit..." de ejecuciones anteriores
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            var child = transform.GetChild(i);
+            if (child.name.StartsWith("Hit"))
+                Destroy(child.gameObject);
+        }
+
+        // Paso 3: crear colliders propios que coinciden con la geometría real de la nave
+        AddBox(new Vector3(0f, -0.1f, 0f), new Vector3(2.8f, 1.0f, 3.5f));
+        AddBox(new Vector3(-3.0f, 0.5f, -0.5f), new Vector3(4.5f, 0.5f, 2.5f));
+        AddBox(new Vector3( 3.0f, 0.5f, -0.5f), new Vector3(4.5f, 0.5f, 2.5f));
+        AddBox(new Vector3(-2.3f, -0.5f, -0.8f), new Vector3(3.5f, 0.5f, 2.0f));
+        AddBox(new Vector3( 2.3f, -0.5f, -0.8f), new Vector3(3.5f, 0.5f, 2.0f));
+        
+        // Autocalibrar a los 0.5 segundos por si el jugador ya está sosteniendo el celular
         Invoke(nameof(Calibrar), 0.5f);
+    }
+
+    void AddBox(Vector3 center, Vector3 size)
+    {
+        var bc = gameObject.AddComponent<BoxCollider>();
+        bc.center    = center;
+        bc.size      = size;
+        bc.isTrigger = true; 
+    }
+
+    // Cambiamos Update por FixedUpdate para trabajar de la mano con las físicas del EngineController
+    void FixedUpdate()
+    {
+        // No mover la nave si el juego no está activo
+        // if (GameManager.Instance != null && !GameManager.Instance.IsPlaying) return;
+
+        // Si aún no hemos recibido datos del celular, no intentamos mover la nave
+        if (!estaCalibrado || rotacionRecibidaCelular == Quaternion.identity) return;
+
+        // --- MATEMÁTICA ABSOLUTA: SOLUCIÓN PARA ANDROID GAMEROTATIONVECTOR ---
+        
+        Quaternion rotacionRelativa = Quaternion.Inverse(calibracionCentro) * rotacionRecibidaCelular;
+
+        float rotX = NormalizarAngulo(rotacionRelativa.eulerAngles.x);
+        float rotY = NormalizarAngulo(rotacionRelativa.eulerAngles.y);
+        float rotZ = NormalizarAngulo(rotacionRelativa.eulerAngles.z);
+
+        float rollCelular = rotZ; 
+        float pitchCelular = celularEnModoLandscape ? rotY : rotX; 
+
+        pitchCelular = AplicarZonaMuerta(pitchCelular, zonaMuerta);
+        rollCelular  = AplicarZonaMuerta(rollCelular, zonaMuerta);
+
+        float inputV = Mathf.Clamp(pitchCelular / limiteInclinacion, -1f, 1f);
+        float inputH = Mathf.Clamp(rollCelular / limiteInclinacion, -1f, 1f);
+
+        if (invertirArribaAbajo) inputV = -inputV;
+        if (invertirIzquierdaDerecha) inputH = -inputH;
+
+        // --- APLICAR MOVIMIENTO FÍSICO Y VISUAL ---
+
+        // Usamos la posición del rigidbody para no sobreescribir el avance en Z
+        Vector3 pos = _rb.position;
+
+        // Mover en X y Y limitado por los bordes del túnel
+        pos.x = Mathf.Clamp(pos.x + inputH * LATERAL_SPEED * Time.fixedDeltaTime, -xLimit, xLimit);
+        pos.y = Mathf.Clamp(pos.y + inputV * LATERAL_SPEED * Time.fixedDeltaTime, -yLimit, yLimit);
+
+        // ¡MODIFICACIÓN CLAVE! MovePosition es compatible con las físicas (AddRelativeForce del motor)
+        _rb.MovePosition(pos);
+
+        // Interpolar suavemente hacia el ángulo de inclinación objetivo visual
+        _roll  = Mathf.Lerp(_roll,  -inputH * ROLL_AMOUNT,  ROLL_SPEED  * Time.fixedDeltaTime);
+        _pitch = Mathf.Lerp(_pitch, -inputV * PITCH_AMOUNT, PITCH_SPEED * Time.fixedDeltaTime);
+
+        // Aplicar la rotación visual (pitch en X, roll en Z, Y siempre 0)
+        // Usamos MoveRotation para que el colisionador gire suavemente con la física
+        Quaternion rotacionVisual = Quaternion.Euler(_pitch, 0f, _roll);
+        _rb.MoveRotation(rotacionVisual);
     }
 
     void Update()
     {
+        // La entrada de teclado (Espacio) se debe leer en Update para no perder el click
         if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             Calibrar();
-        }
-    }
-
-    void FixedUpdate()
-    {
-        if (!estaCalibrado || rotacionRecibidaCelular == Quaternion.identity) return;
-
-        // 1. Obtener la rotación exacta respecto al centro calibrado
-        Quaternion rotacionRelativa = Quaternion.Inverse(calibracionCentro) * rotacionRecibidaCelular;
-        Vector3 angulos = rotacionRelativa.eulerAngles;
-
-        // 2. Extraer los 3 EJES INDEPENDIENTES
-        float rawPitch = NormalizarAngulo(angulos.x); // Adelante/Atrás
-        float rawYaw   = NormalizarAngulo(angulos.y); // Giro plano (Brújula)
-        float rawRoll  = NormalizarAngulo(angulos.z); // Volante
-
-        // 3. Aplicar Zona Muerta suave y Normalizar a rango de -1 a 1 (Asumiendo 60° como límite humano cómodo)
-        float targetPitch = Mathf.Clamp(AplicarZonaMuerta(rawPitch, zonaMuerta) / 60f, -1f, 1f);
-        float targetYaw   = Mathf.Clamp(AplicarZonaMuerta(rawYaw, zonaMuerta) / 60f, -1f, 1f);
-        float targetRoll  = Mathf.Clamp(AplicarZonaMuerta(rawRoll, zonaMuerta) / 60f, -1f, 1f);
-
-        // 4. Suavizar la entrada (Lerp) para evitar tirones de red o de pulso
-        inputPitch = Mathf.Lerp(inputPitch, targetPitch, Time.fixedDeltaTime * suavizado);
-        inputYaw   = Mathf.Lerp(inputYaw, targetYaw, Time.fixedDeltaTime * suavizado);
-        inputRoll  = Mathf.Lerp(inputRoll, targetRoll, Time.fixedDeltaTime * suavizado);
-
-        // 5. APLICAR ROTACIÓN FÍSICA A LOS 3 EJES
-        Vector3 torque = new Vector3(
-            inputPitch * fuerzaSubirBajar,
-            inputYaw * fuerzaGiroLateral,
-            inputRoll * fuerzaRotarAlas // Negativo para que el giro del volante coincida con la pantalla
-        );
-        rb.AddRelativeTorque(torque, ForceMode.Acceleration);
-
-        // 6. APLICAR DESLIZAMIENTO FÍSICO (Strafe) basado en hacia dónde apuntamos
-        // Esto es crucial para tuberías: si apuntas a la derecha, la nave se desliza a la derecha.
-        if (fuerzaDeslizamientoLateral > 0)
-        {
-            Vector3 fuerzaLateral = Vector3.right * (inputYaw * fuerzaDeslizamientoLateral);
-            rb.AddRelativeForce(fuerzaLateral, ForceMode.Acceleration);
         }
     }
 
@@ -98,12 +158,16 @@ public class StarshipController : MonoBehaviour
     {
         calibracionCentro = rotacionRecibidaCelular;
         estaCalibrado = true;
-        Debug.Log("Nave Calibrada: Ahora tienes control independiente de los 3 ejes.");
+        Debug.Log("Celular Calibrado: Esta posición es ahora tu centro (0,0).");
     }
 
     private float NormalizarAngulo(float angulo)
     {
-        if (angulo > 180f) angulo -= 360f;
+        angulo %= 360f;
+        if (angulo > 180f)
+            angulo -= 360f;
+        else if (angulo < -180f)
+            angulo += 360f;
         return angulo;
     }
 
