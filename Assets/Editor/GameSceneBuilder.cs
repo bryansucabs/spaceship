@@ -68,10 +68,13 @@ public static class GameSceneBuilder
             var rb = shipGo.GetComponent<Rigidbody>() ?? shipGo.AddComponent<Rigidbody>();
             rb.useGravity  = false; // sin gravedad
             rb.isKinematic = true;  // movida por script, no por fisica
+            
 
+            // Remplazado por logica en ShipController:
             // Establecer los limites de movimiento correctos para el tunel actual
             // xLimit = apothem - grosor/2 - ancho real del ala (4.68u)
             // yLimit = apothem - grosor/2 - alto real de la nave (0.74u)
+            /*
             var sc = shipGo.GetComponent<ShipController>();
             if (sc != null)
             {
@@ -79,6 +82,7 @@ public static class GameSceneBuilder
                 sc.yLimit = APOTHEM - THICKNESS * 0.5f - 0.74f; // = 53.26u
                 EditorUtility.SetDirty(shipGo); // marcar para que Unity guarde los valores
             }
+            */
         }
 
         // ── Paso 6: Marcar la escena como modificada para que Unity la guarde ─

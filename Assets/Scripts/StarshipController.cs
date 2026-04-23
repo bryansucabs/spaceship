@@ -8,6 +8,11 @@ public class StarshipController : MonoBehaviour
     // ==========================================
     // --- ¡NUEVO! CONFIGURACIÓN DE VISIÓN ---
     // ==========================================
+
+    [Header("Autoavance")]
+    public bool autoavance = true;
+
+
     [Header("Control por Visión (Python)")]
     [Tooltip("Arrastra aquí el objeto que tiene el script UDPReceiver")]
     public UDPReceiver receptorUDP; 
@@ -18,7 +23,7 @@ public class StarshipController : MonoBehaviour
 
     [Header("Configuración de Vuelo")]
     public float speed = 40f;
-    public float turnSpeed = 90f;
+    public float turnSpeed = 45f;
     
     [Header("Zona Muerta")]
     public float deadzoneAngle = 10f; 
@@ -78,30 +83,57 @@ public class StarshipController : MonoBehaviour
             velocidadActual = (accel - brake) * multiplicadorVelocidadZ;
             velocidadActual = Mathf.Max(0f, velocidadActual); // No retroceder
         }
-
-        Vector3 avance = transform.forward * velocidadActual * Time.fixedDeltaTime;
-        rb.MovePosition(rb.position + avance);
+        if(autoavance)
+        {
+            velocidadActual = 60f;
+        }
+        //Vector3 avance = transform.forward * velocidadActual * Time.fixedDeltaTime;
+        //rb.MovePosition(rb.position + avance);
+        rb.linearVelocity = transform.forward * velocidadActual;
 
 
         // --- 3. GIRO (MOTOR DE FÍSICAS) ---
         float targetVisualPitch = normalizedPitch * 60f;
         float targetVisualRoll = normalizedRoll * 60f; 
+        float smoothPitch = 0f;
+        float smoothRoll = 0f;
+        Vector3 currentAngles = rb.rotation.eulerAngles;
         
         // El Yaw sigue siendo continuo (como volante)
         float yawTurn = normalizedRoll * turnSpeed * Time.fixedDeltaTime;
+        float newYaw = currentAngles.y - yawTurn; 
+
 
         // Extraemos los ángulos actuales. Al usar físicas, usamos rb.rotation
-        Vector3 currentAngles = rb.rotation.eulerAngles;
+       
 
         // Suavizamos el cabeceo y el alabeo (Pitch y Roll)
-        float smoothPitch = Mathf.LerpAngle(currentAngles.x, targetVisualPitch, Time.fixedDeltaTime * 10f);
-        float smoothRoll = Mathf.LerpAngle(currentAngles.z, targetVisualRoll, Time.fixedDeltaTime * 10f);
+        if (Mathf.Abs(normalizedRoll) < 0.01f && Mathf.Abs(normalizedPitch) < 0.01f)
+        {
+            float autoLevelForce = 15f; 
+            
+            // 1. Aplanar Horizonte (Pitch y Roll a 0)
+            smoothPitch = Mathf.LerpAngle(currentAngles.x, 0, Time.fixedDeltaTime * autoLevelForce);
+            smoothRoll = Mathf.LerpAngle(currentAngles.z, 0, Time.fixedDeltaTime * autoLevelForce);
+            
+            // 2. EL YAW SE QUEDA INTACTO
+            // Ya no forzamos a que vuelva a 0. La nave se quedará 
+            // mirando hacia la dirección en la que la dejaste.
+        }
+        else 
+        {
+            // --- MODO ACTIVO: EL JUGADOR ESTÁ ESQUIVANDO ---
+            smoothPitch = Mathf.LerpAngle(currentAngles.x, targetVisualPitch, Time.fixedDeltaTime * 10f);
+            smoothRoll = Mathf.LerpAngle(currentAngles.z, targetVisualRoll, Time.fixedDeltaTime * 10f);
+        }
         
         // Sumamos (o restamos) el giro del Yaw
-        float newYaw = currentAngles.y - yawTurn; 
+        //float newYaw = currentAngles.y - yawTurn; 
+        
 
         // rb.MoveRotation gira la nave de forma segura sin atravesar paredes con las alas
         Quaternion rotacionFisica = Quaternion.Euler(smoothPitch, newYaw, smoothRoll);
+
         rb.MoveRotation(rotacionFisica);
     }
 

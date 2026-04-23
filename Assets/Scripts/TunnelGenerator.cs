@@ -117,17 +117,19 @@ public class TunnelGenerator : MonoBehaviour
         }
 
         // Actualizar los limites de movimiento de la nave segun el tamanio del tunel
-        SetShipBounds();
+        //SetShipBounds();
 
         Debug.Log($"[Tunnel] Generado en runtime — apothem={APOTHEM}, largo={TUNNEL_LENGTH}");
     }
 
+    // REMPLAZADO POR LOGICA EN STARSHIPCONTROLLER
     // Ajusta los limites X e Y de la nave para que coincidan con la pared interior del tunel
+    /*
     void SetShipBounds()
     {
         var ship = GameObject.Find("PlayerShip");
         if (ship == null) return;
-        var sc = ship.GetComponent<ShipController>();
+        var sc = ship.GetComponent<StarshipController>();
         if (sc == null) return;
 
         // Cara interior del tunel = APOTHEM - THICKNESS/2 = 54u
@@ -136,6 +138,7 @@ public class TunnelGenerator : MonoBehaviour
         sc.xLimit = APOTHEM - THICKNESS * 0.5f - 4.68f;
         sc.yLimit = APOTHEM - THICKNESS * 0.5f - 0.74f;
     }
+    */
 
     // Crea un cubo con material Unlit (color uniforme sin importar la luz)
     GameObject MakeCube(GameObject parent, string name,

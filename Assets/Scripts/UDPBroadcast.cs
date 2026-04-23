@@ -8,7 +8,7 @@ using System.Globalization;
 public class UDPManager : MonoBehaviour
 {
     [Header("Referencias")]
-    public StarshipController nave; 
+    public StarshipController_Sin_Curvas nave; 
 
     [Header("Configuración Red")]
     public int port = 11011;
