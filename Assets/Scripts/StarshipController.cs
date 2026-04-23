@@ -81,7 +81,7 @@ public class StarshipController : MonoBehaviour
 
         Vector3 avance = transform.forward * velocidadActual * Time.fixedDeltaTime;
         rb.MovePosition(rb.position + avance);
-
+        
 
         // --- 3. GIRO (MOTOR DE FÍSICAS) ---
         float targetVisualPitch = normalizedPitch * 60f;
