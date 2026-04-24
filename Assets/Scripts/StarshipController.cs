@@ -3,6 +3,10 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody))]
 public class StarshipController : MonoBehaviour
 {
+    public NetworkSend networkSend;
+    // Variables de memoria para no "spamear" la vibración
+    private bool wasInDeadzone = true;
+    private bool wasAtMaxAngle = false;
     public Quaternion rotacionRecibidaCelular = Quaternion.identity;
 
     // ==========================================
@@ -66,6 +70,35 @@ public class StarshipController : MonoBehaviour
 
         float normalizedPitch = Mathf.Clamp(pitchInput / 60f, -1f, 1f);
         float normalizedRoll = Mathf.Clamp(rollInput / 60f, -1f, 1f);
+
+        // ========================================================
+        // --- LÓGICA DE VIBRACIÓN HÁPTICA ---
+        // ========================================================
+        
+        // 1. Clic de Centro (El jugador entró a la zona muerta)
+        bool currentlyInDeadzone = (Mathf.Abs(normalizedRoll) == 0f && Mathf.Abs(normalizedPitch) == 0f);
+
+        if (currentlyInDeadzone && !wasInDeadzone)
+        {
+            // Solo vibra el instante en que entra al centro
+            if (networkSend != null) networkSend.SendData("VIBRATE_CENTER");
+            Debug.Log("Tacto: Centro alcanzado");
+        }
+        wasInDeadzone = currentlyInDeadzone;
+
+        // 2. Tope Físico (El jugador llegó al ángulo máximo permitido)
+        // Usamos >= 1f porque clamp ya limitó el valor entre -1 y 1
+        bool currentlyAtMaxAngle = (Mathf.Abs(normalizedRoll) >= 1f || Mathf.Abs(normalizedPitch) >= 1f);
+
+        if (currentlyAtMaxAngle && !wasAtMaxAngle)
+        {
+            // Solo vibra el instante en que choca con el límite virtual
+            if (networkSend != null) networkSend.SendData("VIBRATE_MAX");
+            Debug.Log("Tacto: Límite máximo de giro alcanzado");
+        }
+        wasAtMaxAngle = currentlyAtMaxAngle;
+        // ========================================================
+
 
         // --- 2. MOVIMIENTO (MOTOR DE FÍSICAS) ---
         // rb.MovePosition mueve la nave, pero la DETIENE si hay una pared poligonal

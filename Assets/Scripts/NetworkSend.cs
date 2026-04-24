@@ -26,7 +26,9 @@ public class NetworkSend : MonoBehaviour
     // --- ENVIAR DATOS ---
     public void SendData(string message)
     {
+        Debug.Log("Enviando: " + message);
         remoteIP = InstanceManagerPC.instance.ip;
+        Debug.Log("IP: " + remoteIP);
         if (remoteIP == "")
         {
             Debug.LogError("IP no configurada");
