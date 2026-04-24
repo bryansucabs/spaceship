@@ -3,6 +3,7 @@ using UnityEngine;
 public class SoundBank : MonoBehaviour
 {
     public static SoundBank Instance;
+    public NetworkSend networkSend;
 
     [Header("Sonidos de impacto")]
     public AudioClip impactoPared;
@@ -21,13 +22,16 @@ public class SoundBank : MonoBehaviour
 
     public void PlayPared()
     {
-        if (impactoPared != null)
+        if (impactoPared != null){
             _source.PlayOneShot(impactoPared, 1f);
+        }
     }
 
     public void PlayObstaculo()
     {
-        if (impactoObstaculo != null)
+        if (impactoObstaculo != null){
+            networkSend.SendData("VIBRATE_CHOQUE");
             _source.PlayOneShot(impactoObstaculo, 1f);
+        }
     }
 }

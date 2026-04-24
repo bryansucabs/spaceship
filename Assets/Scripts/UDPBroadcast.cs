@@ -41,7 +41,7 @@ public class UDPManager : MonoBehaviour
         mainThread.Start();
 
         // 3. Iniciamos el anuncio de la PC
-        StartCoroutine(BroadcastLoop());
+        //StartCoroutine(BroadcastLoop());
     }
 
     // El Broadcast es mejor como Corrutina: consume menos que un Thread extra
@@ -74,14 +74,16 @@ public class UDPManager : MonoBehaviour
                 //Debug.Log("Recibido: " + text);
 
                 // Lógica de detección de IP del móvil
+                /*
                 if (text == "END") {
                     ipCelular = remoteEP.Address.ToString();
                     Debug.Log("Móvil detectado en: " + ipCelular);
                     InstanceManagerPC.instance.ip = ipCelular;
                     conectado = true;
                 }
+                */
                 // Lógica de Quaternions
-                else if (text.Contains("|")) {
+                if (text.Contains("|")) {
                     //Debug.Log("Recibido quaternion: " + text);
                     ParseQuaternion(text);
                 }
