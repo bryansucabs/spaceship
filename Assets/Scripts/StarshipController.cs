@@ -23,7 +23,7 @@ public class StarshipController : MonoBehaviour
 
     [Header("Configuración de Vuelo")]
     public float speed = 40f;
-    public float turnSpeed = 45f;
+    public float maxYawAngle = 45f;
     
     [Header("Zona Muerta")]
     public float deadzoneAngle = 10f; 
@@ -92,48 +92,30 @@ public class StarshipController : MonoBehaviour
         rb.linearVelocity = transform.forward * velocidadActual;
 
 
-        // --- 3. GIRO (MOTOR DE FÍSICAS) ---
+        // --- 3. GIRO ABSOLUTO (MOTOR DE FÍSICAS) ---
+        
+        // El Yaw ahora es ABSOLUTO, igual que el Pitch. 
+        // Nota: Le pongo un signo negativo (-normalizedRoll) para mantener 
+        // la misma dirección de giro que tenías en tu código anterior al restar. 
+        // Si notas que gira al revés, simplemente quítale el signo menos.
         float targetVisualPitch = normalizedPitch * 60f;
-        float targetVisualRoll = normalizedRoll * 60f; 
-        float smoothPitch = 0f;
-        float smoothRoll = 0f;
+    
+        float targetVisualRoll = normalizedRoll * 60f;
+        float targetVisualYaw = -normalizedRoll * maxYawAngle;
+
+        // Al usar físicas, usamos rb.rotation
         Vector3 currentAngles = rb.rotation.eulerAngles;
-        
-        // El Yaw sigue siendo continuo (como volante)
-        float yawTurn = normalizedRoll * turnSpeed * Time.fixedDeltaTime;
-        float newYaw = currentAngles.y - yawTurn; 
 
-
-        // Extraemos los ángulos actuales. Al usar físicas, usamos rb.rotation
-       
-
-        // Suavizamos el cabeceo y el alabeo (Pitch y Roll)
-        if (Mathf.Abs(normalizedRoll) < 0.01f && Mathf.Abs(normalizedPitch) < 0.01f)
-        {
-            float autoLevelForce = 15f; 
-            
-            // 1. Aplanar Horizonte (Pitch y Roll a 0)
-            smoothPitch = Mathf.LerpAngle(currentAngles.x, 0, Time.fixedDeltaTime * autoLevelForce);
-            smoothRoll = Mathf.LerpAngle(currentAngles.z, 0, Time.fixedDeltaTime * autoLevelForce);
-            
-            // 2. EL YAW SE QUEDA INTACTO
-            // Ya no forzamos a que vuelva a 0. La nave se quedará 
-            // mirando hacia la dirección en la que la dejaste.
-        }
-        else 
-        {
-            // --- MODO ACTIVO: EL JUGADOR ESTÁ ESQUIVANDO ---
-            smoothPitch = Mathf.LerpAngle(currentAngles.x, targetVisualPitch, Time.fixedDeltaTime * 10f);
-            smoothRoll = Mathf.LerpAngle(currentAngles.z, targetVisualRoll, Time.fixedDeltaTime * 10f);
-        }
+        // Suavizamos TODOS los ejes para que el movimiento sea fluido
+        float smoothPitch = Mathf.LerpAngle(currentAngles.x, targetVisualPitch, Time.fixedDeltaTime * 10f);
+        float smoothRoll = Mathf.LerpAngle(currentAngles.z, targetVisualRoll, Time.fixedDeltaTime * 10f);
         
-        // Sumamos (o restamos) el giro del Yaw
-        //float newYaw = currentAngles.y - yawTurn; 
-        
+        // El Yaw ahora persigue un objetivo fijo, igual que los demás
+        // Si currentAngles.y pasa por 360 grados, LerpAngle lo maneja de forma segura
+        float smoothYaw = Mathf.LerpAngle(currentAngles.y, targetVisualYaw, Time.fixedDeltaTime * 10f);
 
         // rb.MoveRotation gira la nave de forma segura sin atravesar paredes con las alas
-        Quaternion rotacionFisica = Quaternion.Euler(smoothPitch, newYaw, smoothRoll);
-
+        Quaternion rotacionFisica = Quaternion.Euler(smoothPitch, smoothYaw, smoothRoll);
         rb.MoveRotation(rotacionFisica);
     }
 
