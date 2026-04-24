@@ -12,7 +12,7 @@ public class UDPManager : MonoBehaviour
 
     [Header("Configuración Red")]
     public int port = 11011;
-    public float intervaloBroadcast = 5f; // Cada 5 segundos para no saturar
+    public float intervaloBroadcast = 2f; // Cada 2 segundos para no saturar
 
     private UdpClient udpClient;
     private Thread mainThread;
@@ -47,7 +47,8 @@ public class UDPManager : MonoBehaviour
     // El Broadcast es mejor como Corrutina: consume menos que un Thread extra
     System.Collections.IEnumerator BroadcastLoop()
     {
-        while (running && !conectado)
+        int intentos = 0;
+        while (running && !conectado && intentos < 5)
         {
             try {
                 byte[] data = Encoding.UTF8.GetBytes("PC");
@@ -57,6 +58,7 @@ public class UDPManager : MonoBehaviour
                 Debug.Log("Anunciando presencia de PC en la red...");
             } catch { }
 
+            intentos++;
             yield return new WaitForSeconds(intervaloBroadcast);
         }
     }
@@ -120,6 +122,7 @@ public class UDPManager : MonoBehaviour
         running = false;
         try { if (udpClient != null) { udpClient.Close(); udpClient = null; } } catch { }
         try { if (mainThread != null) { mainThread.Abort(); mainThread = null; } } catch { }
+        Debug.Log("El juego se ha cerrado");
     }
 
     void OnApplicationQuit()
