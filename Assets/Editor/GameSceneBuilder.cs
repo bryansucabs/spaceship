@@ -65,9 +65,10 @@ public static class GameSceneBuilder
             shipGo.transform.position = Vector3.zero;
 
             // Asegurarse de que tiene Rigidbody configurado correctamente
+            // isKinematic=false porque StarshipController usa rb.linearVelocity
             var rb = shipGo.GetComponent<Rigidbody>() ?? shipGo.AddComponent<Rigidbody>();
-            rb.useGravity  = false; // sin gravedad
-            rb.isKinematic = true;  // movida por script, no por fisica
+            rb.useGravity  = false;
+            rb.isKinematic = false;
             
 
             // Remplazado por logica en ShipController:

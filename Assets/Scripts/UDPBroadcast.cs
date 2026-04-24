@@ -115,10 +115,15 @@ public class UDPManager : MonoBehaviour
         }
     }
 
-    void OnApplicationQuit()
+    void OnDestroy()
     {
         running = false;
-        if (udpClient != null) udpClient.Close();
-        if (mainThread != null) mainThread.Abort();
+        try { if (udpClient != null) { udpClient.Close(); udpClient = null; } } catch { }
+        try { if (mainThread != null) { mainThread.Abort(); mainThread = null; } } catch { }
+    }
+
+    void OnApplicationQuit()
+    {
+        OnDestroy();
     }
 }

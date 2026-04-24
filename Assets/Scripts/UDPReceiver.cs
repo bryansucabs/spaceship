@@ -60,10 +60,15 @@ public class UDPReceiver : MonoBehaviour
         }
     }
 
+    void OnDestroy()
+    {
+        try { if (receiveThread != null) { receiveThread.Abort(); receiveThread = null; } } catch { }
+        try { if (client != null) { client.Close(); client = null; } } catch { }
+    }
+
     void OnApplicationQuit()
     {
-        if (receiveThread != null) receiveThread.Abort();
-        if (client != null) client.Close();
+        OnDestroy();
     }
 }
 

@@ -28,14 +28,14 @@ public static class SparkEffect
 
         // ── Configurar el modulo principal del sistema de particulas ─────────
         var main = ps.main;
-        main.duration        = 0.3f;   // el burst dura 0.3 segundos en total
-        main.loop            = false;  // no se repite, es un efecto de una sola vez
-        main.startLifetime   = new ParticleSystem.MinMaxCurve(0.15f, 0.45f); // cada particula vive entre 0.15 y 0.45s
-        main.startSpeed      = new ParticleSystem.MinMaxCurve(4f, 18f);      // velocidad inicial aleatoria
-        main.startSize       = new ParticleSystem.MinMaxCurve(0.05f, 0.18f); // tamano aleatorio (pequenitas)
-        main.maxParticles    = 40;     // maximo de particulas simultaneas
-        main.gravityModifier = 0.3f;   // leve caida por gravedad para mayor realismo
-        main.simulationSpace = ParticleSystemSimulationSpace.World; // las particulas se mueven en coordenadas del mundo
+        main.duration        = 0.4f;
+        main.loop            = false;
+        main.startLifetime   = new ParticleSystem.MinMaxCurve(0.2f, 0.6f);
+        main.startSpeed      = new ParticleSystem.MinMaxCurve(6f, 28f);
+        main.startSize       = new ParticleSystem.MinMaxCurve(0.08f, 0.35f);
+        main.maxParticles    = 120;
+        main.gravityModifier = 0.2f;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
 
         // ── Gradiente de color: amarillo -> naranja -> rojo oscuro ────────────
         // Simula el efecto visual de metal rozando metal a alta velocidad
@@ -58,7 +58,7 @@ public static class SparkEffect
         emission.enabled = true;
         // Burst: en el tiempo 0, emitir entre 30 y 40 particulas de una sola vez
         emission.SetBursts(new ParticleSystem.Burst[] {
-            new ParticleSystem.Burst(0f, 30, 40)
+            new ParticleSystem.Burst(0f, 80, 120)
         });
 
         // ── Forma de emision: cono estrecho pegado a la pared ─────────────────

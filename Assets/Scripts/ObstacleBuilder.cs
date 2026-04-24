@@ -331,12 +331,13 @@ public static class ObstacleBuilder
         mat.SetColor("_Color",     color);
         mat.SetFloat("_Cull", 0f);
         mat.EnableKeyword("_EMISSION");
-        mat.SetColor("_EmissionColor", color * 2f);
+        mat.SetColor("_EmissionColor", color * 8f);
         go.GetComponent<Renderer>().material = mat;
 
         var col = go.GetComponent<BoxCollider>();
         if (col) col.isTrigger = true;
         go.AddComponent<TunnelWall>();
+        go.AddComponent<ObstacleGlow>();
         return go;
     }
 
