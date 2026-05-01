@@ -13,7 +13,6 @@ public class UDPReceiver : MonoBehaviour
     [Header("Datos Recibidos (Solo Lectura)")]
     public ControlData currentData = new ControlData();
 
-    // Lock para pasar datos entre hilos de forma segura
     private readonly object lockObject = new object();
     private ControlData pendingData = new ControlData();
 
@@ -34,15 +33,9 @@ public class UDPReceiver : MonoBehaviour
             {
                 IPEndPoint anyIP = new IPEndPoint(IPAddress.Any, 0);
                 byte[] data = client.Receive(ref anyIP);
-
                 string text = Encoding.UTF8.GetString(data);
                 ControlData parsed = JsonUtility.FromJson<ControlData>(text);
-
-                // Guardamos en pendingData (hilo secundario) de forma segura
-                lock (lockObject)
-                {
-                    pendingData = parsed;
-                }
+                lock (lockObject) { pendingData = parsed; }
             }
             catch (System.Exception err)
             {
@@ -53,11 +46,7 @@ public class UDPReceiver : MonoBehaviour
 
     void Update()
     {
-        // Pasamos los datos al hilo principal de Unity
-        lock (lockObject)
-        {
-            currentData = pendingData;
-        }
+        lock (lockObject) { currentData = pendingData; }
     }
 
     void OnDestroy()
@@ -66,15 +55,13 @@ public class UDPReceiver : MonoBehaviour
         try { if (client != null) { client.Close(); client = null; } } catch { }
     }
 
-    void OnApplicationQuit()
-    {
-        OnDestroy();
-    }
+    void OnApplicationQuit() { OnDestroy(); }
 }
 
 [System.Serializable]
 public class ControlData
 {
-    public float accel;
-    public float brake;
+    public float accel;           // magnitud de velocidad (pie verde)
+    public int   reverse;         // 0 = adelante, 1 = atrás (pie azul detectado)
+    public int   foot_right_lost; // 1 = pie derecho fuera de cámara
 }

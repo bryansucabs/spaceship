@@ -1,168 +1,232 @@
 using UnityEngine;
 
 /// <summary>
-/// AccelHUD.cs
-/// Dibuja en pantalla un HUD de acelerómetro estilo cockpit:
-///   - Barra vertical de aceleración (verde → amarillo → rojo)
-///   - Número de velocidad actual
-///   - Indicador de freno
-///
-/// SETUP:
-/// 1. Crea un GameObject vacío llamado "HUD" en la escena.
-/// 2. Añade este script a él.
-/// 3. Arrastra el UDPReceiver al campo "receptorUDP".
-/// 4. (Opcional) Asigna una fuente personalizada al campo "hudFont".
-///    Si no, usará la fuente por defecto de Unity.
-///
-/// No necesita Canvas ni nada extra: usa OnGUI (rápido para prototipos).
+/// AccelHUD.cs — v4
+/// HUD de cockpit con:
+///   - Barra de aceleración (verde → amarillo → rojo)
+///   - Indicador RETROCESO con luz azul pulsante
+///   - Alerta parpadeante solo cuando el pie DERECHO sale de la cámara
 /// </summary>
 public class AccelHUD : MonoBehaviour
 {
     [Header("Referencias")]
     public UDPReceiver receptorUDP;
 
-    [Header("Posición y Tamaño del HUD")]
-    [Tooltip("Distancia desde el borde izquierdo (en píxeles).")]
-    public float marginLeft = 30f;
-
-    [Tooltip("Distancia desde el borde inferior (en píxeles).")]
+    [Header("Posición y Tamaño")]
+    public float marginLeft   = 30f;
     public float marginBottom = 40f;
+    public float barWidth     = 28f;
+    public float barHeight    = 180f;
 
-    [Tooltip("Ancho de la barra.")]
-    public float barWidth = 28f;
-
-    [Tooltip("Alto total de la barra.")]
-    public float barHeight = 180f;
-
-    [Header("Aceleración de referencia")]
-    [Tooltip("Valor de accel de Python que llena la barra al 100%. Ajusta según tu setup.")]
+    [Header("Referencia de escala")]
+    [Tooltip("Valor de accel de Python que llena la barra al 100%.")]
     public float accelMaxRef = 100f;
 
-    [Header("Fuente personalizada (opcional)")]
+    [Header("Fuente (opcional)")]
     public Font hudFont;
 
     // -------------------------------------------------------
-    // Recursos internos
+    // Estado interno
     // -------------------------------------------------------
-    private Texture2D _texBlack;
-    private Texture2D _texWhite;
-    private GUIStyle  _labelStyle;
-    private GUIStyle  _valueStyle;
-    private GUIStyle  _brakeStyle;
-    private bool      _stylesReady = false;
+    private bool  _stylesReady = false;
+    private float _blinkTimer  = 0f;
+    private bool  _blinkOn     = true;
 
-    void Start()
+    private GUIStyle _styleLabel;
+    private GUIStyle _styleValue;
+    private GUIStyle _styleReverse;
+    private GUIStyle _styleAlert;
+
+    void Update()
     {
-        _texBlack = MakeTex(1, 1, new Color(0f, 0f, 0f, 0.55f));
-        _texWhite = MakeTex(1, 1, Color.white);
+        _blinkTimer += Time.deltaTime;
+        if (_blinkTimer >= 0.4f)
+        {
+            _blinkTimer = 0f;
+            _blinkOn = !_blinkOn;
+        }
     }
 
     void OnGUI()
     {
         if (!_stylesReady) BuildStyles();
 
-        float accel = 0f;
-        float brake = 0f;
+        float accel      = 0f;
+        bool  isReverse  = false;
+        bool  rightLost  = false;
 
         if (receptorUDP != null)
         {
-            accel = receptorUDP.currentData.accel;
-            brake = receptorUDP.currentData.brake;
+            accel      = receptorUDP.currentData.accel;
+            isReverse  = receptorUDP.currentData.reverse == 1;
+            rightLost  = receptorUDP.currentData.foot_right_lost == 1;
         }
 
         float tAccel = Mathf.Clamp01(accel / accelMaxRef);
-        float tBrake = Mathf.Clamp01(brake / accelMaxRef);
 
-        // ---- Coordenadas (origen en esquina inferior-izquierda) ----
         float screenH = Screen.height;
         float bx = marginLeft;
         float by = screenH - marginBottom - barHeight;
 
-        // ---- Fondo semi-transparente ----
-        float panelW = barWidth + 90f;
-        float panelH = barHeight + 60f;
-        GUI.DrawTexture(new Rect(bx - 10, by - 30, panelW, panelH), _texBlack);
+        // ============================================================
+        // PANEL PRINCIPAL
+        // ============================================================
+        float panelW = barWidth + 105f;
+        float panelH = barHeight + 72f;
+        DrawRect(new Rect(bx - 12, by - 34, panelW, panelH), new Color(0f, 0f, 0f, 0.65f));
 
-        // ---- Etiqueta "ACCEL" ----
-        GUI.Label(new Rect(bx, by - 26, 100, 22), "ACCEL", _labelStyle);
+        // Etiqueta ACCEL / REVERSE según modo
+        string modeLabel = isReverse ? "REVERSE" : "ACCEL";
+        _styleLabel.normal.textColor = isReverse
+            ? new Color(0.3f, 0.65f, 1f)
+            : new Color(0.55f, 0.88f, 1f);
+        GUI.Label(new Rect(bx, by - 28, 90, 20), modeLabel, _styleLabel);
 
-        // ---- Barra de fondo ----
-        GUI.DrawTexture(new Rect(bx, by, barWidth, barHeight), MakeTex(1,1, new Color(0.15f,0.15f,0.15f,1f)));
+        // Barra de fondo
+        DrawRect(new Rect(bx, by, barWidth, barHeight), new Color(0.12f, 0.12f, 0.12f, 1f));
 
-        // ---- Relleno de la barra (color según nivel) ----
+        // Relleno de la barra — azul si retroceso, normal si avance
         float fillH  = barHeight * tAccel;
         float fillY  = by + barHeight - fillH;
-        Color barCol = GradientColor(tAccel);
-        GUI.DrawTexture(new Rect(bx, fillY, barWidth, fillH), MakeTex(1, 1, barCol));
+        Color barCol = isReverse ? ReverseColor(tAccel) : AccelColor(tAccel);
+        DrawRect(new Rect(bx, fillY, barWidth, fillH), barCol);
 
-        // ---- Líneas de referencia (25%, 50%, 75%) ----
-        Color lineCol = new Color(1f,1f,1f,0.25f);
-        foreach (float pct in new float[]{0.25f, 0.5f, 0.75f})
+        // Ticks de referencia
+        Color tick = new Color(1f, 1f, 1f, 0.2f);
+        foreach (float pct in new float[] { 0.25f, 0.5f, 0.75f })
+            DrawRect(new Rect(bx, by + barHeight * (1f - pct), barWidth, 1f), tick);
+
+        // Valor numérico
+        GUI.Label(new Rect(bx + barWidth + 8, by + barHeight * 0.5f - 18, 72, 36),
+                  $"{accel:F0}", _styleValue);
+
+        // ============================================================
+        // INDICADOR DE RETROCESO (panel encima de la barra)
+        // ============================================================
+        float revPanelY = by - 34 - 72f;
+        DrawRect(new Rect(bx - 12, revPanelY, panelW, 66f), new Color(0f, 0f, 0f, 0.65f));
+
+        // Luz circular azul
+        float lightAlpha = isReverse ? (_blinkOn ? 1f : 0.5f) : 0.18f;
+        Color lightColor = isReverse
+            ? new Color(0.1f, 0.45f, 1f, lightAlpha)
+            : new Color(0.2f, 0.2f, 0.4f, lightAlpha);
+
+        float lightSize = 18f;
+        float lightX    = bx + (barWidth - lightSize) * 0.5f;
+        float lightY    = revPanelY + 10f;
+        DrawCircle(new Vector2(lightX + lightSize * 0.5f, lightY + lightSize * 0.5f),
+                   lightSize * 0.5f, lightColor, 16);
+
+        // Texto RETROCESO
+        _styleReverse.normal.textColor = isReverse
+            ? new Color(0.3f, 0.7f, 1f, 1f)
+            : new Color(0.3f, 0.3f, 0.5f, 1f);
+        GUI.Label(new Rect(bx, revPanelY + 32f, panelW - 4, 22), "RETROCESO", _styleReverse);
+
+        // Mini-barra de retroceso
+        if (isReverse)
         {
-            float ly = by + barHeight * (1f - pct);
-            GUI.DrawTexture(new Rect(bx, ly, barWidth, 1f), MakeTex(1,1,lineCol));
+            float miniW = (panelW - 24f) * tAccel;
+            DrawRect(new Rect(bx, revPanelY + 54f, panelW - 24f, 5f), new Color(0.1f, 0.15f, 0.25f, 1f));
+            DrawRect(new Rect(bx, revPanelY + 54f, miniW,        5f), new Color(0.2f, 0.55f, 1f,   1f));
         }
 
-        // ---- Valor numérico ----
-        GUI.Label(new Rect(bx + barWidth + 8, by + barHeight * 0.5f - 16, 70, 32),
-                  $"{accel:F0}", _valueStyle);
-
-        // ---- Indicador de freno (pequeño) ----
-        if (tBrake > 0.01f)
+        // ============================================================
+        // ALERTA: solo pie DERECHO fuera de cámara
+        // ============================================================
+        if (rightLost && _blinkOn)
         {
-            float brakeBarH = 60f * tBrake;
-            float brakeBY   = screenH - marginBottom - brakeBarH - barHeight - 18f;
-            GUI.DrawTexture(new Rect(bx, brakeBY, barWidth, brakeBarH),
-                            MakeTex(1,1, new Color(0.9f, 0.2f, 0.2f, 0.85f)));
-            GUI.Label(new Rect(bx, brakeBY - 20, 80, 18), "BRAKE", _brakeStyle);
+            float alertW = 320f;
+            float alertH = 52f;
+            float alertX = (Screen.width  - alertW) * 0.5f;
+            float alertY = Screen.height  * 0.12f;
+
+            DrawRect(new Rect(alertX, alertY, alertW, alertH), new Color(0.75f, 0.05f, 0.05f, 0.82f));
+            DrawRect(new Rect(alertX,          alertY,          alertW, 2f), new Color(1f, 0.3f, 0.3f, 1f));
+            DrawRect(new Rect(alertX,          alertY+alertH-2, alertW, 2f), new Color(1f, 0.3f, 0.3f, 1f));
+            DrawRect(new Rect(alertX,          alertY,          2f, alertH), new Color(1f, 0.3f, 0.3f, 1f));
+            DrawRect(new Rect(alertX+alertW-2, alertY,          2f, alertH), new Color(1f, 0.3f, 0.3f, 1f));
+
+            GUI.Label(new Rect(alertX, alertY + 10f, alertW, alertH),
+                      "⚠  PIE DERECHO FUERA DE CAMARA", _styleAlert);
         }
     }
 
     // -------------------------------------------------------
     // Helpers
     // -------------------------------------------------------
-    private Color GradientColor(float t)
+    private void DrawRect(Rect r, Color c)
     {
-        // Verde → Amarillo → Rojo
+        var prev = GUI.color;
+        GUI.color = c;
+        GUI.DrawTexture(r, Texture2D.whiteTexture);
+        GUI.color = prev;
+    }
+
+    private void DrawCircle(Vector2 center, float radius, Color color, int segments)
+    {
+        float step = 360f / segments;
+        for (int i = 0; i < segments; i++)
+        {
+            float a = i * step * Mathf.Deg2Rad;
+            float x = center.x + Mathf.Cos(a) * radius - 2f;
+            float y = center.y + Mathf.Sin(a) * radius - 2f;
+            DrawRect(new Rect(x, y, 4f, 4f), color);
+        }
+        DrawRect(new Rect(center.x - radius * 0.55f, center.y - radius * 0.55f,
+                          radius * 1.1f, radius * 1.1f), color);
+    }
+
+    private Color AccelColor(float t)
+    {
         if (t < 0.5f)
             return Color.Lerp(new Color(0.1f, 0.85f, 0.3f), new Color(0.95f, 0.85f, 0.1f), t * 2f);
         else
             return Color.Lerp(new Color(0.95f, 0.85f, 0.1f), new Color(0.95f, 0.2f, 0.1f), (t - 0.5f) * 2f);
     }
 
-    private Texture2D MakeTex(int w, int h, Color col)
+    private Color ReverseColor(float t)
     {
-        Texture2D t = new Texture2D(w, h);
-        t.SetPixel(0, 0, col);
-        t.Apply();
-        return t;
+        // Azul oscuro → azul brillante al aumentar la intensidad del retroceso
+        return Color.Lerp(new Color(0.05f, 0.15f, 0.55f), new Color(0.25f, 0.6f, 1f), t);
     }
 
     private void BuildStyles()
     {
-        _labelStyle = new GUIStyle(GUI.skin.label)
+        _styleLabel = new GUIStyle(GUI.skin.label)
         {
             fontSize  = 11,
             fontStyle = FontStyle.Bold,
-            normal    = { textColor = new Color(0.6f, 0.9f, 1f) }
+            normal    = { textColor = new Color(0.55f, 0.88f, 1f) }
         };
-        if (hudFont != null) _labelStyle.font = hudFont;
+        if (hudFont != null) _styleLabel.font = hudFont;
 
-        _valueStyle = new GUIStyle(GUI.skin.label)
+        _styleValue = new GUIStyle(GUI.skin.label)
         {
             fontSize  = 22,
             fontStyle = FontStyle.Bold,
             normal    = { textColor = Color.white }
         };
-        if (hudFont != null) _valueStyle.font = hudFont;
+        if (hudFont != null) _styleValue.font = hudFont;
 
-        _brakeStyle = new GUIStyle(GUI.skin.label)
+        _styleReverse = new GUIStyle(GUI.skin.label)
         {
             fontSize  = 10,
             fontStyle = FontStyle.Bold,
-            normal    = { textColor = new Color(1f, 0.4f, 0.4f) }
+            alignment = TextAnchor.MiddleCenter,
+            normal    = { textColor = new Color(0.3f, 0.3f, 0.5f) }
         };
-        if (hudFont != null) _brakeStyle.font = hudFont;
+        if (hudFont != null) _styleReverse.font = hudFont;
+
+        _styleAlert = new GUIStyle(GUI.skin.label)
+        {
+            fontSize  = 15,
+            fontStyle = FontStyle.Bold,
+            alignment = TextAnchor.MiddleCenter,
+            normal    = { textColor = Color.white }
+        };
+        if (hudFont != null) _styleAlert.font = hudFont;
 
         _stylesReady = true;
     }

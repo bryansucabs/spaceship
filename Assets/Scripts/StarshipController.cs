@@ -1,12 +1,150 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+
 [RequireComponent(typeof(Rigidbody))]
 public class StarshipController : MonoBehaviour
 {
     public NetworkSend networkSend;
-    // Variables de memoria para no "spamear" la vibración
+
     private bool wasInDeadzone = true;
     private bool wasAtMaxAngle = false;
+
+    public Quaternion rotacionRecibidaCelular = Quaternion.identity;
+
+    [Header("Autoavance")]
+    public bool autoavance = true;
+
+    [Header("Control por Visión (Python)")]
+    [Tooltip("Arrastra aquí el objeto que tiene el script UDPReceiver")]
+    public UDPReceiver receptorUDP;
+
+    [Tooltip("Ajusta este valor si la nave va muy lento o muy rápido")]
+    public float multiplicadorVelocidadZ = 1.0f;
+
+    [Header("Configuración de Vuelo")]
+    public float speed = 40f;
+    public float maxYawAngle = 45f;
+
+    [Header("Zona Muerta")]
+    public float deadzoneAngle = 10f;
+
+    [Header("Calibration")]
+    private Quaternion calibrationOffset = Quaternion.identity;
+    private bool isCalibrated = false;
+
+    private Rigidbody rb;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+    }
+
+    void FixedUpdate()
+    {
+        if (rotacionRecibidaCelular == Quaternion.identity) return;
+
+        // --- 1. LEER Y CALCULAR EL CELULAR ---
+        Quaternion rawRot = rotacionRecibidaCelular;
+        Quaternion currentDeviceRot = new Quaternion(rawRot.x, rawRot.z, rawRot.y, rawRot.w);
+
+        if (!isCalibrated && currentDeviceRot != Quaternion.identity)
+        {
+            calibrationOffset = currentDeviceRot;
+            isCalibrated = true;
+        }
+
+        Quaternion relativeRot = Quaternion.Inverse(calibrationOffset) * currentDeviceRot;
+        Vector3 tiltAngles = relativeRot.eulerAngles;
+        float pitchInput = NormalizeAngle(tiltAngles.x);
+        float rollInput  = NormalizeAngle(tiltAngles.z);
+
+        if (Mathf.Abs(pitchInput) < deadzoneAngle) pitchInput = 0;
+        if (Mathf.Abs(rollInput)  < deadzoneAngle) rollInput  = 0;
+
+        float normalizedPitch = Mathf.Clamp(pitchInput / 60f, -1f, 1f);
+        float normalizedRoll  = Mathf.Clamp(rollInput  / 60f, -1f, 1f);
+
+        // ========================================================
+        // --- LÓGICA DE VIBRACIÓN HÁPTICA ---
+        // ========================================================
+        bool currentlyInDeadzone = (Mathf.Abs(normalizedRoll) == 0f && Mathf.Abs(normalizedPitch) == 0f);
+        if (currentlyInDeadzone && !wasInDeadzone)
+        {
+            if (networkSend != null) networkSend.SendData("VIBRATE_CENTER");
+            Debug.Log("Tacto: Centro alcanzado");
+        }
+        wasInDeadzone = currentlyInDeadzone;
+
+        bool currentlyAtMaxAngle = (Mathf.Abs(normalizedRoll) >= 1f || Mathf.Abs(normalizedPitch) >= 1f);
+        if (currentlyAtMaxAngle && !wasAtMaxAngle)
+        {
+            if (networkSend != null) networkSend.SendData("VIBRATE_MAX");
+            Debug.Log("Tacto: Límite máximo de giro alcanzado");
+        }
+        wasAtMaxAngle = currentlyAtMaxAngle;
+        // ========================================================
+
+        // --- 2. VELOCIDAD DESDE PYTHON ---
+        float velocidadActual = 0f;
+
+        if (receptorUDP != null)
+        {
+            float accel      = receptorUDP.currentData.accel;
+            bool  isReverse  = receptorUDP.currentData.reverse == 1;
+
+            // Pie azul activo → la misma aceleración pero en dirección contraria
+            float direccion  = isReverse ? -1f : 1f;
+            velocidadActual  = accel * direccion * multiplicadorVelocidadZ;
+        }
+
+        if (autoavance)
+        {
+            velocidadActual = 60f;
+        }
+
+        rb.linearVelocity = transform.forward * velocidadActual;
+
+        // --- 3. GIRO ABSOLUTO ---
+        float targetVisualPitch = normalizedPitch * 60f;
+        float targetVisualRoll  = normalizedRoll  * 60f;
+        float targetVisualYaw   = -normalizedRoll * maxYawAngle;
+
+        Vector3 currentAngles = rb.rotation.eulerAngles;
+
+        float smoothPitch = Mathf.LerpAngle(currentAngles.x, targetVisualPitch, Time.fixedDeltaTime * 10f);
+        float smoothRoll  = Mathf.LerpAngle(currentAngles.z, targetVisualRoll,  Time.fixedDeltaTime * 10f);
+        float smoothYaw   = Mathf.LerpAngle(currentAngles.y, targetVisualYaw,   Time.fixedDeltaTime * 10f);
+
+        rb.MoveRotation(Quaternion.Euler(smoothPitch, smoothYaw, smoothRoll));
+    }
+
+    void Update()
+    {
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) Calibrate();
+    }
+
+    public void Calibrate()
+    {
+        Quaternion rawRot = rotacionRecibidaCelular;
+        calibrationOffset = new Quaternion(rawRot.x, rawRot.z, rawRot.y, rawRot.w);
+        Debug.Log("Nave Calibrada al centro cómodo actual");
+    }
+
+    private float NormalizeAngle(float angle)
+    {
+        if (angle > 180) angle -= 360;
+        return angle;
+    }
+}
+
+/*
+//////////////////Assets/Scripts/StarShipController_Sin_Curvas.cs/////////////////
+
+using UnityEngine;
+using UnityEngine.InputSystem;
+[RequireComponent(typeof(Rigidbody))]
+public class StarshipController_Sin_Curvas : MonoBehaviour
+{
     public Quaternion rotacionRecibidaCelular = Quaternion.identity;
 
     // ==========================================
@@ -70,35 +208,6 @@ public class StarshipController : MonoBehaviour
 
         float normalizedPitch = Mathf.Clamp(pitchInput / 60f, -1f, 1f);
         float normalizedRoll = Mathf.Clamp(rollInput / 60f, -1f, 1f);
-
-        // ========================================================
-        // --- LÓGICA DE VIBRACIÓN HÁPTICA ---
-        // ========================================================
-        
-        // 1. Clic de Centro (El jugador entró a la zona muerta)
-        bool currentlyInDeadzone = (Mathf.Abs(normalizedRoll) == 0f && Mathf.Abs(normalizedPitch) == 0f);
-
-        if (currentlyInDeadzone && !wasInDeadzone)
-        {
-            // Solo vibra el instante en que entra al centro
-            if (networkSend != null) networkSend.SendData("VIBRATE_CENTER");
-            Debug.Log("Tacto: Centro alcanzado");
-        }
-        wasInDeadzone = currentlyInDeadzone;
-
-        // 2. Tope Físico (El jugador llegó al ángulo máximo permitido)
-        // Usamos >= 1f porque clamp ya limitó el valor entre -1 y 1
-        bool currentlyAtMaxAngle = (Mathf.Abs(normalizedRoll) >= 1f || Mathf.Abs(normalizedPitch) >= 1f);
-
-        if (currentlyAtMaxAngle && !wasAtMaxAngle)
-        {
-            // Solo vibra el instante en que choca con el límite virtual
-            if (networkSend != null) networkSend.SendData("VIBRATE_MAX");
-            Debug.Log("Tacto: Límite máximo de giro alcanzado");
-        }
-        wasAtMaxAngle = currentlyAtMaxAngle;
-        // ========================================================
-
 
         // --- 2. MOVIMIENTO (MOTOR DE FÍSICAS) ---
         // rb.MovePosition mueve la nave, pero la DETIENE si hay una pared poligonal
@@ -171,3 +280,5 @@ public class StarshipController : MonoBehaviour
         return angle;
     }
 }
+
+*/

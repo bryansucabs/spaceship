@@ -374850,7 +374850,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StarshipController
   networkSend: {fileID: 1446824696}
   rotacionRecibidaCelular: {x: 0, y: 0, z: 0, w: 1}
-  autoavance: 1
+  autoavance: 0
   receptorUDP: {fileID: 1634192089}
   multiplicadorVelocidadZ: 2
   speed: 40
