@@ -10,61 +10,57 @@ public class SpaceCamera : MonoBehaviour
     public float height = 3.0f;   
     public float positionDamping = 5.0f; 
 
-    [Header("Rotación")]
-    public float rotationDamping = 3.0f; 
-    public bool lookAtTarget = true;
+    [Header("Rotación y Visión")]
+    public float rotationDamping = 5.0f; 
+    [Tooltip("Distancia hacia adelante de la nave que la cámara intentará mirar (Look Ahead). Te ayuda a ver los obstáculos antes.")]
+    public float anticipacionMirada = 0f; 
     
-    [Tooltip("Si es verdadero, la cámara se inclina con la nave. Si es falso, el horizonte se mantiene recto.")]
-    public bool rollWithShip = false;
+    [Tooltip("Micro-inclinación visual. Si la nave gira 90°, la cámara solo gira un poquito para dar inmersión sin marear.")]
+    [Range(0f, 1f)]
+    public float multiplicadorInclinacion = 0.15f;
 
     [Header("Prevención de Choques (Túnel)")]
-    public LayerMask obstacleLayers; // IMPORTANTE: Asigna aquí la capa (Layer) de las paredes de tu túnel
-    public float cameraRadius = 0.5f; // El grosor de la cámara para que no atraviese la pared
+    public LayerMask obstacleLayers; 
+    public float cameraRadius = 0.5f; 
 
     void FixedUpdate() 
     {
         if (!target) return;
 
-        // 1. Calcular la posición "Ideal" detrás de la nave
-        Vector3 idealPosition = target.position - (target.forward * distance) + (target.up * height);
+        // 1. POSICIÓN (EL ARREGLO PRINCIPAL)
+        // Usamos Vector3.up (El cielo del MUNDO) en lugar de target.up (El techo de la nave).
+        // Así, aunque la nave gire a 90 grados, la cámara se queda firme ARRIBA, dándote visibilidad perfecta.
+        Vector3 idealPosition = target.position - (target.forward * distance) + (Vector3.up * height);
         Vector3 finalPosition = idealPosition;
 
-        // 2. ANTI-CLIPPING: Lanzamos un rayo desde la nave hacia la posición ideal de la cámara
-        RaycastHit hit;
-        // Usamos la posición de la nave, pero un poco levantada para no chocar con el piso de la nave misma
+        // 2. ANTI-CLIPPING
         Vector3 rayStart = target.position + (Vector3.up * 1f); 
-        
+        RaycastHit hit;
         if (Physics.Linecast(rayStart, idealPosition, out hit, obstacleLayers))
         {
-            // Si chocamos con una pared del túnel, adelantamos la cámara hasta el punto de choque
-            // sumándole un margen de seguridad (cameraRadius) para que no raspe la textura
             finalPosition = hit.point + (hit.normal * cameraRadius);
         }
 
-        // 3. Interpolar la posición suavemente
+        // 3. MOVER LA CÁMARA
         transform.position = Vector3.Lerp(transform.position, finalPosition, Time.fixedDeltaTime * positionDamping);
 
-        // 4. Manejar la rotación
-        if (lookAtTarget)
+        // 4. ROTACIÓN (LOOK AHEAD)
+        // En lugar de mirar directamente a la nave, miramos un punto más adelante en el túnel.
+        Vector3 puntoDeMira = target.position + (target.forward * anticipacionMirada);
+        Vector3 lookDirection = puntoDeMira - transform.position;
+
+        if (lookDirection != Vector3.zero)
         {
-            // Vector de dirección hacia donde debe mirar la cámara
-            Vector3 lookDirection = target.position - transform.position;
+            // Extraemos cuánto está girada la nave (Roll) y lo aplicamos pero multiplicado por un valor muy bajo (0.15)
+            // Esto hace que si la nave gira 90°, la cámara solo gire unos 13°, sintiéndose épico pero sin perder el horizonte.
+            float rollNave = target.eulerAngles.z;
+            if (rollNave > 180f) rollNave -= 360f; // Normalizar -180 a 180
             
-            // Definimos cuál será el "Arriba" de la cámara
-            Vector3 upDirection = rollWithShip ? target.up : Vector3.up;
+            Quaternion rotacionRollExtra = Quaternion.AngleAxis(rollNave * multiplicadorInclinacion, target.forward);
+            Vector3 arribaDinamico = rotacionRollExtra * Vector3.up;
 
-            if (lookDirection != Vector3.zero)
-            {
-                Quaternion wantedRotation = Quaternion.LookRotation(lookDirection, upDirection);
-                transform.rotation = Quaternion.Slerp(transform.rotation, wantedRotation, Time.fixedDeltaTime * rotationDamping);
-            }
-
-            // Si NO queremos que la cámara se incline con la nave, forzamos el Roll (Z) a 0
-            if (!rollWithShip)
-            {
-                Vector3 euler = transform.eulerAngles;
-                transform.rotation = Quaternion.Euler(euler.x, euler.y, 0);
-            }
+            Quaternion wantedRotation = Quaternion.LookRotation(lookDirection, arribaDinamico);
+            transform.rotation = Quaternion.Slerp(transform.rotation, wantedRotation, Time.fixedDeltaTime * rotationDamping);
         }
     }
 }
