@@ -1,19 +1,19 @@
 using UnityEngine;
 
 // ObstacleGenerator.cs
-// Componente que actua como FALLBACK en tiempo de ejecucion.
-// Si los obstaculos ya fueron pre-construidos en Edit Mode con Tools > Build Full Scene,
-// este script no hace nada.
-// Si por alguna razon no existen, los genera usando ObstacleBuilder.
+// Para el Nivel 1: siempre destruye los obstaculos pre-construidos y genera los nuevos.
+// Para el Tutorial: no hace nada (TutorialManager maneja sus propios obstaculos).
 public class ObstacleGenerator : MonoBehaviour
 {
-    // Unity llama Start() al inicio del modo Play, despues de Awake()
     void Start()
     {
-        // Si los obstaculos ya estan en la escena (pre-construidos), no hacer nada
-        if (GameObject.Find("Obstacles") != null) return;
+        // El tutorial tiene sus propios obstaculos — no interferir
+        if (GameMode.IsTutorial) return;
 
-        // Fallback: construir obstaculos en runtime
+        // Destruir obstaculos pre-construidos de la escena y regenerar con el diseno actual
+        var existing = GameObject.Find("Obstacles");
+        if (existing != null) Destroy(existing);
+
         var root = new GameObject("Obstacles");
         ObstacleBuilder.BuildObstaclesInto(root);
     }

@@ -22,8 +22,9 @@ public class TunnelWall : MonoBehaviour
         _inwardNormal = (Vector3.zero - transform.position).normalized;
         if (_inwardNormal == Vector3.zero) _inwardNormal = Vector3.forward;
 
-        // Obstaculos tienen padre "Obstacles", paredes tienen padre "Tunnel"
-        _isDestructible = transform.parent != null && transform.parent.name == "Obstacles";
+        // Buscar en todos los ancestros si alguno se llama "Obstacles"
+        // Los slabs ahora son nietos de "Obstacles" (Obstacles > Frame > Slab)
+        _isDestructible = TieneAncestro("Obstacles");
 
         if (_isDestructible)
             ActualizarMaterial();
@@ -170,5 +171,17 @@ public class TunnelWall : MonoBehaviour
 
         yield return new WaitForSeconds(0.05f);
         Destroy(gameObject);
+    }
+
+    // Sube por la jerarquia buscando un ancestro con ese nombre
+    bool TieneAncestro(string nombre)
+    {
+        var p = transform.parent;
+        while (p != null)
+        {
+            if (p.name == nombre) return true;
+            p = p.parent;
+        }
+        return false;
     }
 }
