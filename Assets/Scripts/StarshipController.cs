@@ -24,7 +24,7 @@ public class StarshipController : MonoBehaviour
     [Header("Configuración de Vuelo")]
     public float speed = 40f;
     public float maxYawAngle = 85f; // 45
-    public float maxRollAngle = 90f; // Nuevo: Límite para el alabeo visual
+    public float maxRollAngle = 20f; // Nuevo: Límite para el alabeo visual
     public float maxPitchAngle = 85f; // Límite para el cabeceo visual
 
     [Header("Zona Muerta")]

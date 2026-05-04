@@ -5,10 +5,11 @@ using System.Text;
 using System.Threading;
 using System.Globalization;
 
-public class Searchphone : MonoBehaviour
+public class UDPBroad_2 : MonoBehaviour
 {
+    [Header("Referencias")]
+    public StarshipController nave; 
 
-    private string ipPendiente = null;
     [Header("Configuración Red")]
     public int port = 11011;
     public float intervaloBroadcast = 2f; // Cada 2 segundos para no saturar
@@ -17,6 +18,9 @@ public class Searchphone : MonoBehaviour
     private Thread mainThread;
     private bool running = true;
     private bool conectado = false;
+    
+    private Quaternion rotationFromMobile;
+    private readonly object lockObj = new object();
     private string ipCelular = "";
 
     void Start()
@@ -44,7 +48,7 @@ public class Searchphone : MonoBehaviour
     System.Collections.IEnumerator BroadcastLoop()
     {
         int intentos = 0;
-        while (running && !conectado && intentos < 10)
+        while (running && !conectado && intentos < 5)
         {
             try {
                 byte[] data = Encoding.UTF8.GetBytes("PC");
@@ -52,7 +56,6 @@ public class Searchphone : MonoBehaviour
                 IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(NetworkUtils.GetBroadcastAddress()), port);
                 udpClient.Send(data, data.Length, endPoint);
                 Debug.Log("Anunciando presencia de PC en la red...");
-                
             } catch { }
 
             intentos++;
@@ -71,39 +74,50 @@ public class Searchphone : MonoBehaviour
                 //Debug.Log("Recibido: " + text);
 
                 // Lógica de detección de IP del móvil
+                /*
                 if (text == "END") {
-                    //ipCelular = remoteEP.Address.ToString();
-                    ipPendiente = remoteEP.Address.ToString();
-                    //Debug.Log("Móvil detectado en: " + ipCelular);
-                    //PlayerPrefs.SetString("ipJugador", ipCelular);
-                    //PlayerPrefs.Save();
-                    //Debug.Log("IP guardada: " + PlayerPrefs.GetString("ipJugador"));
-                    //InstanceManagerPC.instance.ip = ipCelular;
-                    //conectado = true;
-                    //running = false;   
+                    ipCelular = remoteEP.Address.ToString();
+                    Debug.Log("Móvil detectado en: " + ipCelular);
+                    InstanceManagerPC.instance.ip = ipCelular;
+                    conectado = true;
+                }
+                */
+                // Lógica de Quaternions
+                if (text.Contains("|")) {
+                    //Debug.Log("Recibido quaternion: " + text);
+                    ParseQuaternion(text);
                 }
             } catch { /* Evitamos spam de errores al cerrar */ }
         }
     }
 
-    void Update()
-{
-    if (ipPendiente != null)
+    private void ParseQuaternion(string text)
     {
-        ipCelular = ipPendiente;
-        ipPendiente = null;
+        string[] v = text.Split('|');
+        if (v.Length == 4) {
+            lock (lockObj) {
 
-        Debug.Log("Móvil detectado en: " + ipCelular);
+                // Extraemos los valores de forma segura sin importar el idioma de la PC
+                float x = float.Parse(v[0], CultureInfo.InvariantCulture);
+                float y = float.Parse(v[1], CultureInfo.InvariantCulture);
+                float z = float.Parse(v[2], CultureInfo.InvariantCulture);
+                float w = float.Parse(v[3], CultureInfo.InvariantCulture);
 
-        PlayerPrefs.SetString("ipJugador", ipCelular);
-        PlayerPrefs.Save();
-
-        InstanceManagerPC.instance.ip = ipCelular;
-
-        conectado = true;
-        running = false;
+                // Creamos el Quaternion y aplicamos la corrección de Android a Unity (-z, -w) directamente.
+                // Esto nos ahorra crear la variable "rotacionCruda" y hace el código más limpio y rápido.
+                rotationFromMobile = new Quaternion(x, y, z, -w);
+            }
+        }
     }
-}
+
+    void Update()
+    {
+        if (nave != null) {
+            lock (lockObj) {
+                nave.rotacionRecibidaCelular = rotationFromMobile;
+            }
+        }
+    }
 
     void OnDestroy()
     {

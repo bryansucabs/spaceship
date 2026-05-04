@@ -30,6 +30,11 @@ public class MainMenuManager : MonoBehaviour
         if (GUI.Button(new Rect(w / 2f - 150, h * 0.46f, 300, 75), "Tutorial", _buttonStyle))
         {
             GameMode.IsTutorial = true;
+            if (InstanceManagerPC.instance.ip == "")
+            {
+                Debug.Log("InstanceManagerPC.instance.ip is empty, setting ip from PlayerPrefs" + PlayerPrefs.GetString("ipJugador"));
+                InstanceManagerPC.instance.ip = PlayerPrefs.GetString("ipJugador");
+            }
             SceneManager.LoadScene("SampleScene");
         }
 
@@ -37,6 +42,11 @@ public class MainMenuManager : MonoBehaviour
         if (GUI.Button(new Rect(w / 2f - 150, h * 0.64f, 300, 75), "Nivel 1", _buttonStyle))
         {
             GameMode.IsTutorial = false;
+            if (InstanceManagerPC.instance.ip == "")
+            {
+                Debug.Log("InstanceManagerPC.instance.ip is empty, setting ip from PlayerPrefs" + PlayerPrefs.GetString("ipJugador"));
+                InstanceManagerPC.instance.ip = PlayerPrefs.GetString("ipJugador", "");
+            }
             SceneManager.LoadScene("SampleScene");
         }
     }
