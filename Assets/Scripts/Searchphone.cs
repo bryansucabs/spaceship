@@ -7,12 +7,14 @@ using System.Globalization;
 
 public class Searchphone : MonoBehaviour
 {
-
+    public MainMenuManager pointer; 
+    private Quaternion rotationFromMobile;
+    private readonly object lockObj = new object();
     private string ipPendiente = null;
     [Header("Configuración Red")]
     public int port = 11011;
     public float intervaloBroadcast = 2f; // Cada 2 segundos para no saturar
-
+    
     private UdpClient udpClient;
     private Thread mainThread;
     private bool running = true;
@@ -59,6 +61,24 @@ public class Searchphone : MonoBehaviour
             yield return new WaitForSeconds(intervaloBroadcast);
         }
     }
+    private void ParseQuaternion(string text)
+    {
+        string[] v = text.Split('|');
+        if (v.Length == 4) {
+            lock (lockObj) {
+
+                // Extraemos los valores de forma segura sin importar el idioma de la PC
+                float x = float.Parse(v[0], CultureInfo.InvariantCulture);
+                float y = float.Parse(v[1], CultureInfo.InvariantCulture);
+                float z = float.Parse(v[2], CultureInfo.InvariantCulture);
+                float w = float.Parse(v[3], CultureInfo.InvariantCulture);
+
+                // Creamos el Quaternion y aplicamos la corrección de Android a Unity (-z, -w) directamente.
+                // Esto nos ahorra crear la variable "rotacionCruda" y hace el código más limpio y rápido.
+                rotationFromMobile = new Quaternion(x, y, z, -w);
+            }
+        }
+    }
 
     private void ReceiveLoop()
     {
@@ -82,6 +102,10 @@ public class Searchphone : MonoBehaviour
                     //conectado = true;
                     //running = false;   
                 }
+                if (text.Contains("|")) {
+                    //Debug.Log("Recibido quaternion: " + text);
+                    ParseQuaternion(text);
+                }
             } catch { /* Evitamos spam de errores al cerrar */ }
         }
     }
@@ -102,6 +126,11 @@ public class Searchphone : MonoBehaviour
 
         conectado = true;
         running = false;
+    }
+    if (pointer != null) {
+        lock (lockObj) {
+            pointer.rotacionRecibidaCelular = rotationFromMobile;
+        }
     }
 }
 

@@ -11,7 +11,7 @@ public class UDPBroad_2 : MonoBehaviour
     public StarshipController nave; 
 
     [Header("Configuración Red")]
-    public int port = 11011;
+    public int port = 11017;
     public float intervaloBroadcast = 2f; // Cada 2 segundos para no saturar
 
     private UdpClient udpClient;
