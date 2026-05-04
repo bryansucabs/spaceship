@@ -449902,7 +449902,7 @@ MonoBehaviour:
   positionDamping: 5
   rotationDamping: 3
   anticipacionMirada: 0
-  multiplicadorInclinacion: 0.15
+  multiplicadorInclinacion: 0
   obstacleLayers:
     serializedVersion: 2
     m_Bits: 8
