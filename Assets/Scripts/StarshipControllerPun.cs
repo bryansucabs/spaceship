@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 using Photon.Pun; // Necesario para la red
 
 [RequireComponent(typeof(Rigidbody))]
-public class StarshipControllerPun : MonoBehaviourPun // Cambiado a MonoBehaviourPun
+public class StarshipControllerPun : MonoBehaviourPun 
 {
     [Header("Modo de Control")]
     public bool esJugadorTeclado = false; // El GameSpawner cambiará esto
@@ -23,7 +23,7 @@ public class StarshipControllerPun : MonoBehaviourPun // Cambiado a MonoBehaviou
 
     [Header("Configuración de Vuelo")]
     public float speed = 40f;
-    public float maxYawAngle = 85f;
+    public float yawTurnSpeed = 100f; // NUEVO: Velocidad a la que da la vuelta (puedes cambiarlo en el Inspector)
     public float maxRollAngle = 20f;
     public float maxPitchAngle = 85f;
 
@@ -97,18 +97,22 @@ public class StarshipControllerPun : MonoBehaviourPun // Cambiado a MonoBehaviou
 
         float targetVisualPitch = pitchInput * maxPitchAngle;
         float targetVisualRoll = rollInput * maxRollAngle;
-        float targetVisualYaw = yawInput * maxYawAngle;
+        
+        // MODIFICADO: El Yaw ahora es una velocidad acumulativa
+        float rotacionVelocidadYaw = yawInput * yawTurnSpeed;
 
         Vector3 currentAngles = rb.rotation.eulerAngles;
 
         float smoothPitch = Mathf.LerpAngle(currentAngles.x, targetVisualPitch, Time.fixedDeltaTime * 2f);
         float smoothRoll = Mathf.LerpAngle(currentAngles.z, targetVisualRoll, Time.fixedDeltaTime * 2f);
-        float smoothYaw = Mathf.LerpAngle(currentAngles.y, targetVisualYaw, Time.fixedDeltaTime * 2f);
+        
+        // Sumamos la velocidad de giro al ángulo Y actual
+        float newYaw = currentAngles.y + (rotacionVelocidadYaw * Time.fixedDeltaTime);
 
-        rb.MoveRotation(Quaternion.Euler(smoothPitch, smoothYaw, smoothRoll));
+        rb.MoveRotation(Quaternion.Euler(smoothPitch, newYaw, smoothRoll));
     }
 
-    // --- LÓGICA 2: CELULAR (Tu código original intacto) ---
+    // --- LÓGICA 2: CELULAR ---
     void LogicaMovimientoCelular()
     {
         if (rotacionRecibidaCelular == Quaternion.identity) return;
@@ -151,8 +155,13 @@ public class StarshipControllerPun : MonoBehaviourPun // Cambiado a MonoBehaviou
         }
         wasAtMaxAngle = currentlyAtMaxAngle;
 
+        // PRIORIDAD DEL AUTOAVANCE (Corregida como lo vimos antes)
         float velocidadActual = 0f;
-        if (receptorUDP != null)
+        if (autoavance)
+        {
+            velocidadActual = 60f;
+        }
+        else if (receptorUDP != null)
         {
             float accel = receptorUDP.currentData.accel;
             bool isReverse = receptorUDP.currentData.reverse == 1;
@@ -160,21 +169,23 @@ public class StarshipControllerPun : MonoBehaviourPun // Cambiado a MonoBehaviou
             velocidadActual = accel * direccion * multiplicadorVelocidadZ;
         }
 
-        if (autoavance) velocidadActual = 60f;
-
         rb.linearVelocity = transform.forward * velocidadActual;
 
         float targetVisualPitch = normalizedPitch * maxPitchAngle;
         float targetVisualRoll = normalizedRoll * maxRollAngle;
-        float targetVisualYaw = normalizedYaw * maxYawAngle;
+        
+        // MODIFICADO: El Yaw ahora es una velocidad acumulativa
+        float rotacionVelocidadYaw = normalizedYaw * yawTurnSpeed;
 
         Vector3 currentAngles = rb.rotation.eulerAngles;
 
         float smoothPitch = Mathf.LerpAngle(currentAngles.x, targetVisualPitch, Time.fixedDeltaTime * 10f);
         float smoothRoll = Mathf.LerpAngle(currentAngles.z, targetVisualRoll, Time.fixedDeltaTime * 10f);
-        float smoothYaw = Mathf.LerpAngle(currentAngles.y, targetVisualYaw, Time.fixedDeltaTime * 10f);
+        
+        // Sumamos la velocidad de giro al ángulo Y actual
+        float newYaw = currentAngles.y + (rotacionVelocidadYaw * Time.fixedDeltaTime);
 
-        rb.MoveRotation(Quaternion.Euler(smoothPitch, smoothYaw, smoothRoll));
+        rb.MoveRotation(Quaternion.Euler(smoothPitch, newYaw, smoothRoll));
     }
 
     public void Calibrate()
