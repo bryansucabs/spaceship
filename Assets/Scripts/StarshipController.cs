@@ -43,125 +43,80 @@ public class StarshipController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // ========================================================
-        // --- 1. LECTURA DEL CELULAR (Giroscopio Jugador 1) ---
-        // ========================================================
-        float normalizedPitch = 0f;
-        float normalizedYaw = 0f;
-        float normalizedRoll = 0f;
+        if (rotacionRecibidaCelular == Quaternion.identity) return;
 
-        if (rotacionRecibidaCelular != Quaternion.identity)
+        // --- 1. LEER Y CALCULAR EL CELULAR ---
+        Quaternion rawRot = rotacionRecibidaCelular;
+        Quaternion currentDeviceRot = new Quaternion(rawRot.x, rawRot.z, rawRot.y, rawRot.w);
+
+        if (!isCalibrated && currentDeviceRot != Quaternion.identity)
         {
-            Quaternion rawRot = rotacionRecibidaCelular;
-            Quaternion currentDeviceRot = new Quaternion(rawRot.x, rawRot.z, rawRot.y, rawRot.w);
-
-            if (!isCalibrated && currentDeviceRot != Quaternion.identity)
-            {
-                calibrationOffset = currentDeviceRot;
-                isCalibrated = true;
-            }
-
-            Quaternion relativeRot = Quaternion.Inverse(calibrationOffset) * currentDeviceRot;
-            Vector3 tiltAngles = relativeRot.eulerAngles;
-
-            float pitchInput = NormalizeAngle(tiltAngles.x); 
-            float yawInput   = NormalizeAngle(tiltAngles.y); 
-            float rollInput  = NormalizeAngle(tiltAngles.z); 
-
-            if (Mathf.Abs(pitchInput) < deadzoneAngle) pitchInput = 0;
-            if (Mathf.Abs(yawInput)   < deadzoneAngle) yawInput   = 0;
-            if (Mathf.Abs(rollInput)  < deadzoneAngle) rollInput  = 0;
-
-            normalizedPitch = Mathf.Clamp(pitchInput / 60f, -1f, 1f);
-            normalizedYaw   = Mathf.Clamp(yawInput   / 60f, -1f, 1f);
-            normalizedRoll  = Mathf.Clamp(rollInput  / 60f, -1f, 1f);
-
-            // Vibración (Solo se activa si el celular está conectado)
-            bool currentlyInDeadzone = (Mathf.Abs(normalizedRoll) == 0f && Mathf.Abs(normalizedPitch) == 0f && Mathf.Abs(normalizedYaw) == 0f);
-            if (currentlyInDeadzone && !wasInDeadzone)
-            {
-                if (networkSend != null) networkSend.SendData("VIBRATE_CENTER");
-                Debug.Log("Tacto: Centro alcanzado");
-            }
-            wasInDeadzone = currentlyInDeadzone;
-
-            bool currentlyAtMaxAngle = (Mathf.Abs(normalizedRoll) >= 1f || Mathf.Abs(normalizedPitch) >= 1f || Mathf.Abs(normalizedYaw) >= 1f);
-            if (currentlyAtMaxAngle && !wasAtMaxAngle)
-            {
-                if (networkSend != null) networkSend.SendData("VIBRATE_MAX");
-                Debug.Log("Tacto: Límite máximo de giro alcanzado");
-            }
-            wasAtMaxAngle = currentlyAtMaxAngle;
+            calibrationOffset = currentDeviceRot;
+            isCalibrated = true;
         }
 
-        // ========================================================
-        // --- 2. LECTURA DEL TECLADO (Jugador 2) ---
-        // ========================================================
-        float keyMoveX = 0f; // Izquierda / Derecha
-        float keyMoveY = 0f; // Arriba / Abajo
-        float keyMoveZ = 0f; // Adelante / Atrás
-        bool isUsingKeyYaw = false;
-        float targetKeyYaw = 0f;
+        Quaternion relativeRot = Quaternion.Inverse(calibrationOffset) * currentDeviceRot;
+        Vector3 tiltAngles = relativeRot.eulerAngles;
 
-        if (Keyboard.current != null)
+        // Extraer los 3 ejes de forma independiente
+        float pitchInput = NormalizeAngle(tiltAngles.x); // Inclinación adelante/atrás
+        float yawInput   = NormalizeAngle(tiltAngles.y); // Giro sobre el propio eje (como un volante)
+        float rollInput  = NormalizeAngle(tiltAngles.z); // Inclinación lateral (como un avión)
+
+        // Aplicar zonas muertas a los 3 ejes
+        if (Mathf.Abs(pitchInput) < deadzoneAngle) pitchInput = 0;
+        if (Mathf.Abs(yawInput)   < deadzoneAngle) yawInput   = 0;
+        if (Mathf.Abs(rollInput)  < deadzoneAngle) rollInput  = 0;
+
+        // Normalizar los inputs (-1 a 1). Asumimos +-60 grados como el máximo movimiento físico del jugador
+        float normalizedPitch = Mathf.Clamp(pitchInput / 60f, -1f, 1f);
+        float normalizedYaw   = Mathf.Clamp(yawInput   / 60f, -1f, 1f);
+        float normalizedRoll  = Mathf.Clamp(rollInput  / 60f, -1f, 1f);
+
+        // ========================================================
+        // --- LÓGICA DE VIBRACIÓN HÁPTICA ---
+        // ========================================================
+        bool currentlyInDeadzone = (Mathf.Abs(normalizedRoll) == 0f && Mathf.Abs(normalizedPitch) == 0f && Mathf.Abs(normalizedYaw) == 0f);
+        if (currentlyInDeadzone && !wasInDeadzone)
         {
-            var kb = Keyboard.current;
-
-            // Movimiento con Letras
-            if (kb.aKey.isPressed) keyMoveX -= 1f; // A -> Izquierda
-            if (kb.dKey.isPressed) keyMoveX += 1f; // D -> Derecha
-            if (kb.wKey.isPressed) keyMoveY += 1f; // W -> Arriba
-            if (kb.sKey.isPressed) keyMoveZ -= 1f; // S -> Atrás
-
-            // Movimiento vertical con flechas (Arriba / Abajo)
-            if (kb.upArrowKey.isPressed) keyMoveY += 1f;   // Flecha Arriba -> Arriba
-            if (kb.downArrowKey.isPressed) keyMoveY -= 1f; // Flecha Abajo -> Abajo
-
-            // Rotación 90° con flechas (Izquierda / Derecha)
-            if (kb.leftArrowKey.isPressed) 
-            {
-                targetKeyYaw = -90f;
-                isUsingKeyYaw = true;
-            }
-            else if (kb.rightArrowKey.isPressed) 
-            {
-                targetKeyYaw = 90f;
-                isUsingKeyYaw = true;
-            }
+            if (networkSend != null) networkSend.SendData("VIBRATE_CENTER");
+            Debug.Log("Tacto: Centro alcanzado");
         }
+        wasInDeadzone = currentlyInDeadzone;
 
+        bool currentlyAtMaxAngle = (Mathf.Abs(normalizedRoll) >= 1f || Mathf.Abs(normalizedPitch) >= 1f || Mathf.Abs(normalizedYaw) >= 1f);
+        if (currentlyAtMaxAngle && !wasAtMaxAngle)
+        {
+            if (networkSend != null) networkSend.SendData("VIBRATE_MAX");
+            Debug.Log("Tacto: Límite máximo de giro alcanzado");
+        }
+        wasAtMaxAngle = currentlyAtMaxAngle;
         // ========================================================
-        // --- 3. APLICAR VELOCIDAD DE TRASLACIÓN ---
-        // ========================================================
-        float velocidadAvance = 0f;
+
+        // --- 2. VELOCIDAD DESDE PYTHON ---
+        float velocidadActual = 0f;
 
         if (receptorUDP != null)
         {
             float accel      = receptorUDP.currentData.accel;
             bool  isReverse  = receptorUDP.currentData.reverse == 1;
+
             float direccion  = isReverse ? -1f : 1f;
-            velocidadAvance  = accel * direccion * multiplicadorVelocidadZ;
+            velocidadActual  = accel * direccion * multiplicadorVelocidadZ;
         }
 
-        if (autoavance) velocidadAvance = 60f;
+        if (autoavance)
+        {
+            velocidadActual = 60f;
+        }
 
-        // Combinamos la velocidad base (Python/Auto) con el movimiento del teclado ("S" resta velocidad)
-        velocidadAvance += (keyMoveZ * speed);
+        rb.linearVelocity = transform.forward * velocidadActual;
 
-        // Creamos un vector local: X (lados), Y (arriba/abajo), Z (avance)
-        Vector3 localVelocity = new Vector3(keyMoveX * speed, keyMoveY * speed, velocidadAvance);
-        
-        // TransformDirection convierte nuestro vector local a las coordenadas globales del mundo
-        rb.linearVelocity = transform.TransformDirection(localVelocity);
-
-        // ========================================================
-        // --- 4. APLICAR GIRO Y ROTACIÓN ---
-        // ========================================================
+        // --- 3. GIRO ABSOLUTO INDEPENDIENTE ---
+        // Ahora calculamos los objetivos visuales basándonos en sus respectivos inputs normalizados
         float targetVisualPitch = normalizedPitch * maxPitchAngle;
         float targetVisualRoll  = normalizedRoll  * maxRollAngle;
-        
-        // Si estamos tocando las flechas laterales, forzamos los 90 grados. Si no, usamos el celular
-        float targetVisualYaw = isUsingKeyYaw ? targetKeyYaw : (normalizedYaw * maxYawAngle);
+        float targetVisualYaw   = normalizedYaw   * maxYawAngle; // El Yaw ahora depende del YawInput del celular
 
         Vector3 currentAngles = rb.rotation.eulerAngles;
 

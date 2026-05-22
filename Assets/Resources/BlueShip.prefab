@@ -490,13 +490,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0127cc58fab845f88bf8410ac46a890, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StarshipControllerPun
-  esJugadorTeclado: 0
+  esJugadorTeclado: 1
   networkSend: {fileID: 0}
   rotacionRecibidaCelular: {x: 0, y: 0, z: 0, w: 1}
-  autoavance: 1
+  autoavance: 0
   receptorUDP: {fileID: 0}
   multiplicadorVelocidadZ: 1
   speed: 40
+  velocidadLateralTeclado: 40
   maxYawAngle: 45
   maxRollAngle: 90
   maxPitchAngle: 85
@@ -554,6 +555,6 @@ MonoBehaviour:
   observableSearch: 2
   ObservedComponents:
   - {fileID: 8773883101352765285}
-  sceneViewId: 3
+  sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0

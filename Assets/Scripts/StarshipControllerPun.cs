@@ -75,18 +75,21 @@ public class StarshipControllerPun : MonoBehaviourPun // Cambiado a MonoBehaviou
         float pitchInput = 0f;
         float yawInput = 0f;
         float rollInput = 0f;
+        float moveZ = 1f; // Avance normal hacia adelante por defecto
 
         // Leer teclado usando el InputSystem (W/S para Pitch, A/D para Yaw, Q/E para Roll)
         if (Keyboard.current != null)
         {
-            if (Keyboard.current.wKey.isPressed) pitchInput = 1f;
-            if (Keyboard.current.sKey.isPressed) pitchInput = -1f;
+            if (Keyboard.current.downArrowKey.isPressed) pitchInput = 1f;
+            if (Keyboard.current.upArrowKey.isPressed) pitchInput = -1f;
             
             if (Keyboard.current.dKey.isPressed) yawInput = 1f;
             if (Keyboard.current.aKey.isPressed) yawInput = -1f;
 
-            if (Keyboard.current.eKey.isPressed) rollInput = -1f;
-            if (Keyboard.current.qKey.isPressed) rollInput = 1f;
+            if (Keyboard.current.sKey.isPressed) moveZ = -1f; 
+
+            if (Keyboard.current.rightArrowKey.isPressed) rollInput = -1f;
+            if (Keyboard.current.leftArrowKey.isPressed) rollInput = 1f;
         }
 
         float velocidadActual = autoavance ? 60f : speed;

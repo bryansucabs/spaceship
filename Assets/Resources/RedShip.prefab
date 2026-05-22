@@ -2711,7 +2711,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0127cc58fab845f88bf8410ac46a890, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StarshipControllerPun
-  esJugadorTeclado: 0
+  esJugadorTeclado: 1
   networkSend: {fileID: 0}
   rotacionRecibidaCelular: {x: 0, y: 0, z: 0, w: 1}
   autoavance: 1
