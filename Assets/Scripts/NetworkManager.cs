@@ -5,13 +5,13 @@ using UnityEngine.UI;
 using TMPro; 
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
-    public Button botonEmpezar; // Arrastra tu botón aquí desde el Inspector
-    public TextMeshProUGUI textoEstado; // Opcional: un texto para ver qué pasa
+    public Button botonEmpezar; 
+    public TextMeshProUGUI textoEstado; 
 
     void Start()
     {
         PhotonNetwork.AutomaticallySyncScene = true; 
-        botonEmpezar.interactable = false; // Desactiva el botón al inicio
+        botonEmpezar.interactable = false; 
         PhotonNetwork.ConnectUsingSettings();
     }
 

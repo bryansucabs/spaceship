@@ -7,6 +7,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
     [Header("Puntos de Aparición")]
     public Transform spawnPointAzul;
     public Transform spawnPointRoja;
+    public UDPManager udpManager;
 
 
     void Start()
@@ -20,6 +21,8 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
                 // El creador de la sala usa el celular y aparece en la posición azul
                 miNave = PhotonNetwork.Instantiate("RedShip", spawnPointAzul.position, spawnPointAzul.rotation);
                 miNave.GetComponent<StarshipControllerPun>().esJugadorTeclado = true;
+                udpManager = miNave.GetComponent<UDPManager>();
+                udpManager.nave = miNave.GetComponent<StarshipControllerPun>();
 
                // miNave.GetComponent<StarshipControllerPun>().autoavance = true
             }
