@@ -181,6 +181,8 @@ GameObject:
   - component: {fileID: 8553383359192277095}
   - component: {fileID: 1519617362646359274}
   - component: {fileID: 5468268412321660246}
+  - component: {fileID: 8773883101352765285}
+  - component: {fileID: 5004633516878870223}
   m_Layer: 0
   m_Name: BlueShip
   m_TagString: Untagged
@@ -516,3 +518,42 @@ MonoBehaviour:
   - {fileID: 5020800769329739566}
   - {fileID: 8389910813757845302}
   camaraDeNave: {fileID: 2610108074253214547}
+--- !u!114 &8773883101352765285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2953252114489636426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonTransformView
+  m_SynchronizePosition: 1
+  m_SynchronizeRotation: 1
+  m_SynchronizeScale: 0
+  m_UseLocal: 1
+--- !u!114 &5004633516878870223
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2953252114489636426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents:
+  - {fileID: 8773883101352765285}
+  sceneViewId: 3
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
