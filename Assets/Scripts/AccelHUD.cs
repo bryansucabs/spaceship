@@ -36,7 +36,15 @@ public class AccelHUD : MonoBehaviour
     private GUIStyle _styleValue;
     private GUIStyle _styleReverse;
     private GUIStyle _styleAlert;
-
+    void Start()
+    {
+        // Si la casilla está vacía, busca el objeto automáticamente en la escena
+        if (receptorUDP == null) 
+        {
+            receptorUDP = FindFirstObjectByType<UDPReceiver>();
+        }
+        
+    }
     void Update()
     {
         _blinkTimer += Time.deltaTime;
@@ -155,7 +163,7 @@ public class AccelHUD : MonoBehaviour
 
     // -------------------------------------------------------
     // Helpers
-    // -------------------------------------------------------
+    // ------------------------------tar-------------------------
     private void DrawRect(Rect r, Color c)
     {
         var prev = GUI.color;

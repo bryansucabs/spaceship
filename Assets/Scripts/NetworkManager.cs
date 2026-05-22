@@ -1,43 +1,48 @@
 using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
-
+using UnityEngine.UI;
+using TMPro; 
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
+    public Button botonEmpezar; // Arrastra tu botón aquí desde el Inspector
+    public TextMeshProUGUI textoEstado; // Opcional: un texto para ver qué pasa
+
     void Start()
     {
-        Debug.Log("Conectando al servidor de Photon...");
-        // Nos conectamos usando la configuración que pusimos al importar PUN 2
-        PhotonNetwork.ConnectUsingSettings(); 
+        PhotonNetwork.AutomaticallySyncScene = true; 
+        botonEmpezar.interactable = false; // Desactiva el botón al inicio
+        PhotonNetwork.ConnectUsingSettings();
     }
 
-    // Se llama automáticamente cuando nos conectamos al servidor maestro
     public override void OnConnectedToMaster()
     {
-        Debug.Log("Conectado al servidor. Entrando al Lobby...");
-        PhotonNetwork.JoinLobby();
+        PhotonNetwork.JoinOrCreateRoom("TunelCompetitivo", new RoomOptions() { MaxPlayers = 2 }, TypedLobby.Default);
     }
 
-    // Se llama cuando entramos al lobby general
-    public override void OnJoinedLobby()
-    {
-        Debug.Log("En el Lobby. Buscando sala...");
-        // Intentamos unirnos a una sala llamada "Tunel1", si no existe, la crea.
-        RoomOptions roomOptions = new RoomOptions() { MaxPlayers = 3 };
-        PhotonNetwork.JoinOrCreateRoom("Tunel1", roomOptions, TypedLobby.Default);
-    }
-
-    // Se llama cuando entramos exitosamente a la sala
     public override void OnJoinedRoom()
     {
-        Debug.Log("¡Unido a la sala: " + PhotonNetwork.CurrentRoom.Name + "!");
-        Debug.Log("Jugadores en la sala: " + PhotonNetwork.CurrentRoom.PlayerCount);
-
-        // Si somos el primer jugador (el host), cargamos la escena del juego.
-        // Los demás jugadores cargarán esta escena automáticamente.
+        // Si somos el Master, encendemos el botón de Start
         if (PhotonNetwork.IsMasterClient)
         {
-            PhotonNetwork.LoadLevel("SampleScene"); // Pon aquí el nombre exacto de tu escena de juego
+            botonEmpezar.interactable = true;
+            if (textoEstado != null) textoEstado.text = "Eres el Host. Esperando rival o pulsa Empezar.";
+        }
+        else
+        {
+            // El jugador 2 no puede pulsar el botón, solo espera
+            botonEmpezar.interactable = false;
+            if (textoEstado != null) textoEstado.text = "Conectado. Esperando a que el Host inicie...";
+        }
+    }
+
+    // ESTA ES LA FUNCIÓN DEL BOTÓN
+    public void IniciarJuego()
+    {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            // Como AutomaticallySyncScene está en true, esto arrastrará al jugador 2 también
+            PhotonNetwork.LoadLevel("GameScene"); // Pon el nombre exacto de tu escena de juego
         }
     }
 }

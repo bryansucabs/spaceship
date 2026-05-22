@@ -1,27 +1,31 @@
 using UnityEngine;
 using Photon.Pun;
+using Photon.Realtime; // Necesario para acceder a Player
 
-public class GameSpawnManager : MonoBehaviour
+public class GameSpawnManager : MonoBehaviourPunCallbacks
 {
     [Header("Puntos de Aparición")]
     public Transform spawnPointAzul;
     public Transform spawnPointRoja;
 
+
     void Start()
     {
         if (PhotonNetwork.IsConnectedAndReady)
         {
-            // Verificamos si somos el creador de la sala (Jugador 1)
+            GameObject miNave;
+
             if (PhotonNetwork.IsMasterClient)
             {
-                // Instanciamos la nave azul (Asegúrate de que el nombre coincida con el prefab en Resources)
-                PhotonNetwork.Instantiate("StarSparrow1", spawnPointAzul.position, spawnPointAzul.rotation);
+                // El creador de la sala usa el celular y aparece en la posición azul
+                miNave = PhotonNetwork.Instantiate("RedShip", spawnPointAzul.position, spawnPointAzul.rotation);
+                miNave.GetComponent<StarshipControllerPun>().esJugadorTeclado = false;
             }
-            // Si somos el Jugador 2
-            else if (PhotonNetwork.CurrentRoom.PlayerCount == 2)
+            else
             {
-                // Instanciamos la nave roja
-                PhotonNetwork.Instantiate("StarSparrow10", spawnPointRoja.position, spawnPointRoja.rotation);
+                // El invitado usa el teclado y aparece en la posición roja
+                miNave = PhotonNetwork.Instantiate("BlueShip", spawnPointRoja.position, spawnPointRoja.rotation);
+                miNave.GetComponent<StarshipControllerPun>().esJugadorTeclado = true;
             }
         }
     }
