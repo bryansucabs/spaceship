@@ -17,9 +17,9 @@ MonoBehaviour:
     AppIdFusion: 
     AppIdChat: 
     AppIdVoice: 
-    AppVersion: 1.0_Tunel2Jugadores
+    AppVersion: 1.0_TunelAsimetrico
     UseNameServer: 1
-    FixedRegion: 
+    FixedRegion: sa
     Server: 
     Port: 0
     ProxyServer: 
@@ -41,5 +41,5 @@ MonoBehaviour:
   - RespawnSpaceship
   - RPC_FinalizarLobby
   DisableAutoOpenWizard: 1
-  ShowSettings: 0
+  ShowSettings: 1
   DevRegionSetOnce: 1
