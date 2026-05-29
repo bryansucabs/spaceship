@@ -13,7 +13,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
     public string blueShipPrefab = "BlueShip";  // Nave que se controla con Teclado
     
     private bool yaNaci = false;
-    public UDPManagerPUN udpManager;
+    private UDPManagerPUN udpManager;
 
     void Start()
     {
@@ -60,6 +60,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
             }
             
             // Conectamos el script de Python/UDP con el controlador de esta nave
+            udpManager = miNave.GetComponent<UDPManagerPUN>();
             if (udpManager != null && controller != null)
             {
                 udpManager.nave = controller;
