@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &4946078208342695826
+--- !u!1 &6201628386078285991
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,40 +8,40 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8922685856593862144}
-  - component: {fileID: 5163973895933457422}
-  - component: {fileID: 7406587651088118589}
-  - component: {fileID: 264729865667421846}
-  - component: {fileID: 2994509546083500934}
+  - component: {fileID: 894760176265405950}
+  - component: {fileID: 1428784729147044641}
+  - component: {fileID: 8926921024642107703}
+  - component: {fileID: 3504975181203113877}
+  - component: {fileID: 286111596078563906}
   m_Layer: 0
-  m_Name: Overlord
+  m_Name: Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &8922685856593862144
+--- !u!4 &894760176265405950
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4946078208342695826}
+  m_GameObject: {fileID: 6201628386078285991}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.53729963, y: -0.000042206415, z: 0.0000662508, w: 0.8433915}
-  m_LocalPosition: {x: 124.51, y: 925, z: -253.7}
+  m_LocalRotation: {x: 0.49642545, y: 0.32271293, z: -0.20555443, w: 0.77920824}
+  m_LocalPosition: {x: 129.79845, y: 925, z: -251.52602}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 65, y: 0, z: 0.009}
---- !u!20 &5163973895933457422
+  m_Father: {fileID: 5257378309523110164}
+  m_LocalEulerAnglesHint: {x: 65, y: 45, z: 0.009}
+--- !u!20 &1428784729147044641
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4946078208342695826}
+  m_GameObject: {fileID: 6201628386078285991}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
@@ -86,21 +86,21 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!81 &7406587651088118589
+--- !u!81 &8926921024642107703
 AudioListener:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4946078208342695826}
+  m_GameObject: {fileID: 6201628386078285991}
   m_Enabled: 1
---- !u!114 &264729865667421846
+--- !u!114 &3504975181203113877
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4946078208342695826}
+  m_GameObject: {fileID: 6201628386078285991}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
@@ -138,13 +138,13 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
---- !u!114 &2994509546083500934
+--- !u!114 &286111596078563906
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4946078208342695826}
+  m_GameObject: {fileID: 6201628386078285991}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 23059918a7dff77c1a97c33349291b0d, type: 3}
@@ -158,3 +158,50 @@ MonoBehaviour:
   zoomMax: 300
   sensibilidadZoomTouch: 0.04
   sensibilidadZoomMouse: 0.1
+--- !u!1 &7795209206385874312
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5257378309523110164}
+  - component: {fileID: 2445188617605193719}
+  m_Layer: 0
+  m_Name: Overlord
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5257378309523110164
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7795209206385874312}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.28844, y: -0, z: -2.17398}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 894760176265405950}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2445188617605193719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7795209206385874312}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4974a5c26fbdd8793b0baee182b383c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkSetup
+  scriptsLocales: []
+  camaraDeNave: {fileID: 6201628386078285991}

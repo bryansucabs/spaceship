@@ -98622,10 +98622,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameSpawnManager
   spawnPointAzul: {fileID: 87163585}
   spawnPointRoja: {fileID: 1214965627}
-  spawnPointOverlord: {fileID: 755663500}
   redShipPrefab: RedShip
   blueShipPrefab: BlueShip
-  overlordPrefab: Overlord
+  udpManager: {fileID: 957855640}
 --- !u!4 &416415664
 Transform:
   m_ObjectHideFlags: 0
