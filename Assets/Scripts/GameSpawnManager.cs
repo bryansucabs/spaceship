@@ -7,22 +7,26 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
     [Header("Puntos de Aparición")]
     public Transform spawnPointAzul;      // Posición de salida para Jugador 1 (RedShip)
     public Transform spawnPointRoja;      // Posición de salida para Jugador 2 (BlueShip)
+    public Transform spawnPointOverlord;  // Posición aérea para el Overlord táctil
     
     [Header("Prefabs (Nombres exactos en Resources)")]
-    public string redShipPrefab = "RedShip";    // Nave que se controla con Celular/UDP
-    public string blueShipPrefab = "BlueShip";  // Nave que se controla con Teclado
+    public string redShipPrefab = "RedShip";    
+    public string blueShipPrefab = "BlueShip";  
+    public string overlordPrefab = "Overlord";  
     
     private bool yaNaci = false;
     private UDPManagerPUN udpManager;
 
     void Start()
     {
+        // Al cargar la escena, intentamos spawnear inmediatamente si la sala ya está completa
         VerificarYSpawnear();
     }
     
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
         base.OnPlayerEnteredRoom(newPlayer);
+        // Si por lag un jugador tardó en cargar la escena, volvemos a evaluar el nacimiento
         VerificarYSpawnear();
     }
 
@@ -31,23 +35,24 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
         if (yaNaci || !PhotonNetwork.InRoom) return;
 
         int conectados = PhotonNetwork.CurrentRoom.PlayerCount;
-        int maximos = PhotonNetwork.CurrentRoom.MaxPlayers; // Ahora es 2
+        int maximos = PhotonNetwork.CurrentRoom.MaxPlayers;
 
-        // Spawnea de inmediato si la sala está llena (2/2) o si estás testeando solo en el editor (1)
+        // Si estamos los 3 completos (o si estás probando tú solo en el editor)
         if (conectados == maximos || conectados == 1)
         {
             yaNaci = true;
-            SpawnearMiNave();
+            SpawnearMiRolAsimetrico();
         }
     }
     
-    void SpawnearMiNave()
+    void SpawnearMiRolAsimetrico()
     {
-        // Evaluamos el orden estricto de llegada mediante la lista de Photon:
-        // Índice [0] -> Primer usuario en entrar (PC 1 - MasterClient) -> RedShip (Celular)
-        // Índice [1] -> Segundo usuario en entrar (PC 2 - Client)       -> BlueShip (Teclado)
+        // Nos guiamos por el orden de la lista ordenada de Photon (PlayerList)
+        // Índice [0] -> Primer usuario en conectar (PC 1 - Mando Celular UDP)
+        // Índice [1] -> Segundo usuario en conectar (PC 2 - Teclado normal)
+        // Índice [2] -> Tercer usuario en conectar (Tablet / Celular del Overlord)
 
-        // 1. SI SOY EL PRIMER JUGADOR (PC 1)
+        // 1. EVALUAR SI SOY EL JUGADOR 1
         if (PhotonNetwork.LocalPlayer.Equals(PhotonNetwork.PlayerList[0]))
         {
             GameObject miNave = PhotonNetwork.Instantiate(redShipPrefab, spawnPointAzul.position, spawnPointAzul.rotation);
@@ -55,23 +60,19 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
             var controller = miNave.GetComponent<StarshipControllerPun>();
             if (controller != null)
             {
-                controller.esJugadorTeclado = false; // Desactiva teclado, usará giroscopio
+                controller.esJugadorTeclado = false;
                 controller.autoavance = true;
             }
             
-            // Conectamos el script de Python/UDP con el controlador de esta nave
             udpManager = miNave.GetComponent<UDPManagerPUN>();
             if (udpManager != null && controller != null)
             {
                 udpManager.nave = controller;
             }
             
-            Debug.Log("[SPAWN] PC 1 detectada. Instanciada RedShip configurada para control por Celular (UDP).");
-            
-            // Al ser solo 2 jugadores, el Host puede cerrar la sala de inmediato para evitar intrusos
-            FinalizarLobby();
+            Debug.Log("[SPAWN] ¡Yo soy el Jugador 1! Nací como RedShip (Mando Celular UDP).");
         }
-        // 2. SI SOY EL SEGUNDO JUGADOR (PC 2)
+        // 2. EVALUAR SI SOY EL JUGADOR 2
         else if (PhotonNetwork.PlayerList.Length > 1 && PhotonNetwork.LocalPlayer.Equals(PhotonNetwork.PlayerList[1]))
         {
             GameObject miNave = PhotonNetwork.Instantiate(blueShipPrefab, spawnPointRoja.position, spawnPointRoja.rotation);
@@ -79,18 +80,36 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
             var controller = miNave.GetComponent<StarshipControllerPun>();
             if (controller != null)
             {
-                controller.esJugadorTeclado = true; // Activa la lectura de flechas/WASD en el teclado
+                controller.esJugadorTeclado = true;
                 controller.autoavance = true;
             }
             
-            Debug.Log("[SPAWN] PC 2 detectada. Instanciada BlueShip configurada para control por Teclado.");
+            Debug.Log("[SPAWN] ¡Yo soy el Jugador 2! Nací como BlueShip (Teclado).");
         }
+        // 3. EVALUAR SI SOY EL JUGADOR 3 (El Overlord táctil)
+        else if (PhotonNetwork.PlayerList.Length > 2 && PhotonNetwork.LocalPlayer.Equals(PhotonNetwork.PlayerList[2]))
+        {
+            // El tercer dispositivo crea su cámara táctil e interfaz. 
+            // Esto NO se ejecuta en el Host, por lo que el Host jamás perderá su pantalla original.
+            PhotonNetwork.Instantiate(overlordPrefab, spawnPointOverlord.position, spawnPointOverlord.rotation);
+            Debug.Log("[SPAWN] ¡Yo soy el Jugador 3! Nací como el Overlord Táctil.");
+
+            // Si soy el Host cierro la sala, si no, le pido amablemente al master que lo haga
+            if (PhotonNetwork.IsMasterClient) FinalizarLobby();
+            else photonView.RPC("RPC_FinalizarLobby", RpcTarget.MasterClient);
+        }
+    }
+
+    [PunRPC]
+    void RPC_FinalizarLobby()
+    {
+        if (PhotonNetwork.IsMasterClient) FinalizarLobby();
     }
 
     void FinalizarLobby()
     {
         PhotonNetwork.CurrentRoom.IsOpen = false;
         PhotonNetwork.CurrentRoom.IsVisible = false;
-        Debug.Log("[Lobby] Sala cerrada. Grupo de 2 pilotos completado.");
+        Debug.Log("[Lobby] Sala cerrada con éxito por seguridad de juego.");
     }
 }
