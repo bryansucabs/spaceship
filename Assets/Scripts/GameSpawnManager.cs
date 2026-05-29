@@ -60,7 +60,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
             var controller = miNave.GetComponent<StarshipControllerPun>();
             if (controller != null)
             {
-                controller.esJugadorTeclado = true;
+                controller.esJugadorTeclado = false;
                 controller.autoavance = true;
             }
             
@@ -81,7 +81,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
             if (controller != null)
             {
                 controller.esJugadorTeclado = true;
-                controller.autoavance = true;
+                controller.autoavance = false;
             }
             
             Debug.Log("[SPAWN] ¡Yo soy el Jugador 2! Nací como BlueShip (Teclado).");

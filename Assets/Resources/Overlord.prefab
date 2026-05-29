@@ -150,12 +150,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23059918a7dff77c1a97c33349291b0d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhoneController
-  minX: -600
-  maxX: 600
-  minZ: -600
-  maxZ: 600
-  zoomMin: 8
-  zoomMax: 300
+  minX: -1000
+  maxX: 1000
+  minZ: -1000
+  maxZ: 1000
+  zoomMin: 4
+  zoomMax: 500
   sensibilidadZoomTouch: 0.04
   sensibilidadZoomMouse: 0.1
 --- !u!1 &7795209206385874312

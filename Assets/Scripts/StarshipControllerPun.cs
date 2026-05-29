@@ -23,8 +23,9 @@ public class StarshipControllerPun : MonoBehaviourPun
 
     [Header("Configuración de Vuelo")]
     public float speed = 40f;
-    public float yawTurnSpeed = 100f; // Velocidad a la que da la vuelta
-    public float maxRollAngle = 20f;
+    public float yawTurnSpeed = 100f; // Usado solo en teclado ahora
+    public float maxYawAngle = 85f;   // Devuelto de tu script original para celular
+    public float maxRollAngle = 90f;  // Ajustado a 90f como tu script anterior
     public float maxPitchAngle = 85f;
 
     [Header("Zona Muerta")]
@@ -38,7 +39,7 @@ public class StarshipControllerPun : MonoBehaviourPun
     {
         rb = GetComponent<Rigidbody>();
 
-        // Como el prefab pierde referencias de la escena, las buscamos automáticamente:
+        // Búsqueda automática de referencias en red
         if (receptorUDP == null) receptorUDP = FindFirstObjectByType<UDPReceiver>();
         if (networkSend == null) networkSend = FindFirstObjectByType<NetworkSend>();
     }
@@ -48,7 +49,7 @@ public class StarshipControllerPun : MonoBehaviourPun
         // Protección de Red: Si la nave no es mía, no leo inputs
         if (!photonView.IsMine) return;
 
-        if (!esJugadorTeclado && Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             Calibrate();
         }
@@ -69,61 +70,49 @@ public class StarshipControllerPun : MonoBehaviourPun
         }
     }
 
-    // --- LÓGICA 1: TECLADO (MODIFICADA) ---
+    // --- LÓGICA 1: TECLADO ---
     void LogicaMovimientoTeclado()
     {
         float pitchInput = 0f;
         float yawInput = 0f;
         float rollInput = 0f;
         
-        // Si el autoavance está activo, la nave avanza sola por defecto (1f). 
-        // Si está desactivado, se queda quieta (0f) a menos que presiones W.
         float moveZ = autoavance ? 1f : 0f; 
 
-        // Leer teclado usando el InputSystem
         if (Keyboard.current != null)
         {
-            // Control de cabeceo (Pitch) con flechas
             if (Keyboard.current.downArrowKey.isPressed) pitchInput = 1f;
             if (Keyboard.current.upArrowKey.isPressed) pitchInput = -1f;
             
-            // Giro horizontal (Yaw) con A/D
             if (Keyboard.current.dKey.isPressed) yawInput = 1f;
             if (Keyboard.current.aKey.isPressed) yawInput = -1f;
 
-            // CAMBIO AQUÍ: Control de avance y retroceso con W y S
             if (Keyboard.current.wKey.isPressed) moveZ = 1f; 
             if (Keyboard.current.sKey.isPressed) moveZ = -1f; 
 
-            // Alabeo visual (Roll) con flechas izquierda/derecha
             if (Keyboard.current.rightArrowKey.isPressed) rollInput = -1f;
             if (Keyboard.current.leftArrowKey.isPressed) rollInput = 1f;
         }
 
-        // CAMBIO AQUÍ: Calculamos la velocidad base e inyectamos el multiplicador de dirección moveZ
         float velocidadBase = autoavance ? 60f : speed;
         float velocidadActual = moveZ * velocidadBase;
         
-        // Aplicamos el movimiento en el eje frontal de la nave de forma física
         rb.linearVelocity = transform.forward * velocidadActual;
 
         float targetVisualPitch = pitchInput * maxPitchAngle;
         float targetVisualRoll = rollInput * maxRollAngle;
-        
         float rotacionVelocidadYaw = yawInput * yawTurnSpeed;
 
         Vector3 currentAngles = rb.rotation.eulerAngles;
 
         float smoothPitch = Mathf.LerpAngle(currentAngles.x, targetVisualPitch, Time.fixedDeltaTime * 2f);
         float smoothRoll = Mathf.LerpAngle(currentAngles.z, targetVisualRoll, Time.fixedDeltaTime * 2f);
-        
-        // Sumamos la velocidad de giro al ángulo Y actual
         float newYaw = currentAngles.y + (rotacionVelocidadYaw * Time.fixedDeltaTime);
 
         rb.MoveRotation(Quaternion.Euler(smoothPitch, newYaw, smoothRoll));
     }
 
-    // --- LÓGICA 2: CELULAR ---
+    // --- LÓGICA 2: CELULAR (DEVUELTA A TU CÓDIGO ORIGINAL) ---
     void LogicaMovimientoCelular()
     {
         if (rotacionRecibidaCelular == Quaternion.identity) return;
@@ -140,22 +129,24 @@ public class StarshipControllerPun : MonoBehaviourPun
         Quaternion relativeRot = Quaternion.Inverse(calibrationOffset) * currentDeviceRot;
         Vector3 tiltAngles = relativeRot.eulerAngles;
 
-        float pitchInput = NormalizeAngle(tiltAngles.x);
-        float yawInput = NormalizeAngle(tiltAngles.y);
-        float rollInput = NormalizeAngle(tiltAngles.z);
+        float pitchInput = NormalizeAngle(tiltAngles.x); 
+        float yawInput   = NormalizeAngle(tiltAngles.y); 
+        float rollInput  = NormalizeAngle(tiltAngles.z); 
 
         if (Mathf.Abs(pitchInput) < deadzoneAngle) pitchInput = 0;
-        if (Mathf.Abs(yawInput) < deadzoneAngle) yawInput = 0;
-        if (Mathf.Abs(rollInput) < deadzoneAngle) rollInput = 0;
+        if (Mathf.Abs(yawInput)   < deadzoneAngle) yawInput   = 0;
+        if (Mathf.Abs(rollInput)  < deadzoneAngle) rollInput  = 0;
 
         float normalizedPitch = Mathf.Clamp(pitchInput / 60f, -1f, 1f);
-        float normalizedYaw = Mathf.Clamp(yawInput / 60f, -1f, 1f);
-        float normalizedRoll = Mathf.Clamp(rollInput / 60f, -1f, 1f);
+        float normalizedYaw   = Mathf.Clamp(yawInput   / 60f, -1f, 1f);
+        float normalizedRoll  = Mathf.Clamp(rollInput  / 60f, -1f, 1f);
 
+        // --- SISTEMA DE VIBRACIÓN HÁPTICA ---
         bool currentlyInDeadzone = (Mathf.Abs(normalizedRoll) == 0f && Mathf.Abs(normalizedPitch) == 0f && Mathf.Abs(normalizedYaw) == 0f);
         if (currentlyInDeadzone && !wasInDeadzone)
         {
             if (networkSend != null) networkSend.SendData("VIBRATE_CENTER");
+            Debug.Log("Tacto: Centro alcanzado");
         }
         wasInDeadzone = currentlyInDeadzone;
 
@@ -163,44 +154,48 @@ public class StarshipControllerPun : MonoBehaviourPun
         if (currentlyAtMaxAngle && !wasAtMaxAngle)
         {
             if (networkSend != null) networkSend.SendData("VIBRATE_MAX");
+            Debug.Log("Tacto: Límite máximo de giro alcanzado");
         }
         wasAtMaxAngle = currentlyAtMaxAngle;
 
+        // --- VELOCIDAD DESDE PYTHON ---
         float velocidadActual = 0f;
+
+        if (receptorUDP != null)
+        {
+            float accel      = receptorUDP.currentData.accel;
+            bool  isReverse  = receptorUDP.currentData.reverse == 1;
+
+            float direccion  = isReverse ? -1f : 1f;
+            velocidadActual  = accel * direccion * multiplicadorVelocidadZ;
+        }
+
         if (autoavance)
         {
             velocidadActual = 60f;
         }
-        else if (receptorUDP != null)
-        {
-            float accel = receptorUDP.currentData.accel;
-            bool isReverse = receptorUDP.currentData.reverse == 1;
-            float direccion = isReverse ? -1f : 1f;
-            velocidadActual = accel * direccion * multiplicadorVelocidadZ;
-        }
 
         rb.linearVelocity = transform.forward * velocidadActual;
 
+        // --- GIRO ABSOLUTO INDEPENDIENTE ORIGINAL ---
         float targetVisualPitch = normalizedPitch * maxPitchAngle;
-        float targetVisualRoll = normalizedRoll * maxRollAngle;
-        
-        float rotacionVelocidadYaw = normalizedYaw * yawTurnSpeed;
+        float targetVisualRoll  = normalizedRoll  * maxRollAngle;
+        float targetVisualYaw   = normalizedYaw   * maxYawAngle; // Restaurado al cálculo absoluto directo
 
         Vector3 currentAngles = rb.rotation.eulerAngles;
 
         float smoothPitch = Mathf.LerpAngle(currentAngles.x, targetVisualPitch, Time.fixedDeltaTime * 10f);
-        float smoothRoll = Mathf.LerpAngle(currentAngles.z, targetVisualRoll, Time.fixedDeltaTime * 10f);
-        
-        float newYaw = currentAngles.y + (rotacionVelocidadYaw * Time.fixedDeltaTime);
+        float smoothRoll  = Mathf.LerpAngle(currentAngles.z, targetVisualRoll,  Time.fixedDeltaTime * 10f);
+        float smoothYaw   = Mathf.LerpAngle(currentAngles.y, targetVisualYaw,   Time.fixedDeltaTime * 10f);
 
-        rb.MoveRotation(Quaternion.Euler(smoothPitch, newYaw, smoothRoll));
+        rb.MoveRotation(Quaternion.Euler(smoothPitch, smoothYaw, smoothRoll));
     }
 
     public void Calibrate()
     {
         Quaternion rawRot = rotacionRecibidaCelular;
         calibrationOffset = new Quaternion(rawRot.x, rawRot.z, rawRot.y, rawRot.w);
-        Debug.Log("Nave Calibrada");
+        Debug.Log("Nave Calibrada al centro cómodo actual");
     }
 
     private float NormalizeAngle(float angle)
