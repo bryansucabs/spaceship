@@ -60,7 +60,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
             var controller = miNave.GetComponent<StarshipControllerPun>();
             if (controller != null)
             {
-                controller.esJugadorTeclado = false;
+                controller.esJugadorTeclado = true;
                 controller.autoavance = true;
             }
             

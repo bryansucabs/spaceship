@@ -15,7 +15,7 @@ public class StarshipControllerPun : MonoBehaviourPun
     public Quaternion rotacionRecibidaCelular = Quaternion.identity;
 
     [Header("Autoavance")]
-    public bool autoavance = true;
+    public bool autoavance = false;
 
     [Header("Control por Visión (Python)")]
     public UDPReceiver receptorUDP;
@@ -23,7 +23,7 @@ public class StarshipControllerPun : MonoBehaviourPun
 
     [Header("Configuración de Vuelo")]
     public float speed = 40f;
-    public float yawTurnSpeed = 100f; // NUEVO: Velocidad a la que da la vuelta (puedes cambiarlo en el Inspector)
+    public float yawTurnSpeed = 100f; // Velocidad a la que da la vuelta
     public float maxRollAngle = 20f;
     public float maxPitchAngle = 85f;
 
@@ -69,36 +69,47 @@ public class StarshipControllerPun : MonoBehaviourPun
         }
     }
 
-    // --- LÓGICA 1: TECLADO ---
+    // --- LÓGICA 1: TECLADO (MODIFICADA) ---
     void LogicaMovimientoTeclado()
     {
         float pitchInput = 0f;
         float yawInput = 0f;
         float rollInput = 0f;
-        float moveZ = 1f; // Avance normal hacia adelante por defecto
+        
+        // Si el autoavance está activo, la nave avanza sola por defecto (1f). 
+        // Si está desactivado, se queda quieta (0f) a menos que presiones W.
+        float moveZ = autoavance ? 1f : 0f; 
 
-        // Leer teclado usando el InputSystem (W/S para Pitch, A/D para Yaw, Q/E para Roll)
+        // Leer teclado usando el InputSystem
         if (Keyboard.current != null)
         {
+            // Control de cabeceo (Pitch) con flechas
             if (Keyboard.current.downArrowKey.isPressed) pitchInput = 1f;
             if (Keyboard.current.upArrowKey.isPressed) pitchInput = -1f;
             
+            // Giro horizontal (Yaw) con A/D
             if (Keyboard.current.dKey.isPressed) yawInput = 1f;
             if (Keyboard.current.aKey.isPressed) yawInput = -1f;
 
+            // CAMBIO AQUÍ: Control de avance y retroceso con W y S
+            if (Keyboard.current.wKey.isPressed) moveZ = 1f; 
             if (Keyboard.current.sKey.isPressed) moveZ = -1f; 
 
+            // Alabeo visual (Roll) con flechas izquierda/derecha
             if (Keyboard.current.rightArrowKey.isPressed) rollInput = -1f;
             if (Keyboard.current.leftArrowKey.isPressed) rollInput = 1f;
         }
 
-        float velocidadActual = autoavance ? 60f : speed;
+        // CAMBIO AQUÍ: Calculamos la velocidad base e inyectamos el multiplicador de dirección moveZ
+        float velocidadBase = autoavance ? 60f : speed;
+        float velocidadActual = moveZ * velocidadBase;
+        
+        // Aplicamos el movimiento en el eje frontal de la nave de forma física
         rb.linearVelocity = transform.forward * velocidadActual;
 
         float targetVisualPitch = pitchInput * maxPitchAngle;
         float targetVisualRoll = rollInput * maxRollAngle;
         
-        // MODIFICADO: El Yaw ahora es una velocidad acumulativa
         float rotacionVelocidadYaw = yawInput * yawTurnSpeed;
 
         Vector3 currentAngles = rb.rotation.eulerAngles;
@@ -155,7 +166,6 @@ public class StarshipControllerPun : MonoBehaviourPun
         }
         wasAtMaxAngle = currentlyAtMaxAngle;
 
-        // PRIORIDAD DEL AUTOAVANCE (Corregida como lo vimos antes)
         float velocidadActual = 0f;
         if (autoavance)
         {
@@ -174,7 +184,6 @@ public class StarshipControllerPun : MonoBehaviourPun
         float targetVisualPitch = normalizedPitch * maxPitchAngle;
         float targetVisualRoll = normalizedRoll * maxRollAngle;
         
-        // MODIFICADO: El Yaw ahora es una velocidad acumulativa
         float rotacionVelocidadYaw = normalizedYaw * yawTurnSpeed;
 
         Vector3 currentAngles = rb.rotation.eulerAngles;
@@ -182,7 +191,6 @@ public class StarshipControllerPun : MonoBehaviourPun
         float smoothPitch = Mathf.LerpAngle(currentAngles.x, targetVisualPitch, Time.fixedDeltaTime * 10f);
         float smoothRoll = Mathf.LerpAngle(currentAngles.z, targetVisualRoll, Time.fixedDeltaTime * 10f);
         
-        // Sumamos la velocidad de giro al ángulo Y actual
         float newYaw = currentAngles.y + (rotacionVelocidadYaw * Time.fixedDeltaTime);
 
         rb.MoveRotation(Quaternion.Euler(smoothPitch, newYaw, smoothRoll));
