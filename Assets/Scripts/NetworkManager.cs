@@ -4,58 +4,112 @@ using Photon.Realtime;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
+
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
     public Button botonEmpezar;
     public TextMeshProUGUI textoEstado;
-    public string escenaDestino = "MapTest";
+    [Tooltip("Solo para LobyV3/MapTest. Dejar vacío en los otros lobbies.")]
+    public string escenaDestino = "";
 
     void Start()
     {
         PhotonNetwork.AutomaticallySyncScene = true;
-        botonEmpezar.interactable = false;
-        if (textoEstado != null) textoEstado.text = "Conectando...";
+        if (botonEmpezar != null) botonEmpezar.interactable = false;
+
+        PhotonNetwork.PhotonServerSettings.AppSettings.AppVersion = "1.0_TunelAsimetrico";
+        PhotonNetwork.PhotonServerSettings.AppSettings.FixedRegion = "sa";
+
+        if (textoEstado != null) textoEstado.text = "Conectando al servidor maestro de Photon...";
+        Debug.Log($"AppVersion: {PhotonNetwork.PhotonServerSettings.AppSettings.AppVersion} | Región: sa | Dispositivo: {(SystemInfo.deviceType == DeviceType.Handheld ? "Móvil" : "PC")}");
         PhotonNetwork.ConnectUsingSettings();
     }
 
     public override void OnConnectedToMaster()
     {
-        if (textoEstado != null) textoEstado.text = "Buscando sala...";
-        PhotonNetwork.JoinOrCreateRoom("TunelCompetitivo", new RoomOptions() { MaxPlayers = 2 }, TypedLobby.Default);
+        if (textoEstado != null) textoEstado.text = "Conectado. Buscando sala competitiva...";
+
+        RoomOptions opcionesSala = new RoomOptions() { MaxPlayers = 3 };
+
+        if (SystemInfo.deviceType == DeviceType.Handheld)
+        {
+            if (textoEstado != null) textoEstado.text = "Buscando la sala de la PC en el celular...";
+            PhotonNetwork.JoinRoom("TunelCompetitivo");
+        }
+        else
+        {
+            PhotonNetwork.JoinOrCreateRoom("TunelCompetitivo", opcionesSala, TypedLobby.Default);
+        }
     }
 
     public override void OnJoinedRoom()
     {
+        ActualizarEstadoLobby();
+    }
+
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        ActualizarEstadoLobby();
+    }
+
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        ActualizarEstadoLobby();
+    }
+
+    private void ActualizarEstadoLobby()
+    {
+        if (PhotonNetwork.CurrentRoom == null) return;
+
+        int conectados = PhotonNetwork.CurrentRoom.PlayerCount;
+        int maximos = PhotonNetwork.CurrentRoom.MaxPlayers;
+
         if (PhotonNetwork.IsMasterClient)
         {
-            botonEmpezar.interactable = true;
-            if (textoEstado != null) textoEstado.text = "Eres el Host. Esperando rival o pulsa Empezar.";
+            if (conectados == maximos)
+            {
+                if (botonEmpezar != null) botonEmpezar.interactable = true;
+                if (textoEstado != null) textoEstado.text = "¡Sala Llena (3/3)! Pulsa Empezar para iniciar la partida.";
+            }
+            else
+            {
+                if (botonEmpezar != null) botonEmpezar.interactable = false;
+                if (textoEstado != null) textoEstado.text = $"Eres el Host. Esperando jugadores... ({conectados}/{maximos})";
+            }
         }
         else
         {
-            botonEmpezar.interactable = false;
-            if (textoEstado != null) textoEstado.text = "Conectado. Esperando a que el Host inicie...";
+            if (botonEmpezar != null) botonEmpezar.interactable = false;
+            if (textoEstado != null) textoEstado.text = $"Conectado. Esperando al Host... ({conectados}/{maximos})";
         }
+    }
+
+    public override void OnJoinRoomFailed(short returnCode, string message)
+    {
+        if (textoEstado != null)
+            textoEstado.text = "Error: No se encontró la sala. Asegúrate de que la PC abrió el juego primero.";
     }
 
     public override void OnDisconnected(DisconnectCause cause)
     {
-        // Si Photon falla, habilitar el botón para test offline
-        botonEmpezar.interactable = true;
+        // Modo offline para pruebas (usado por LobyV3 → MapTest)
+        if (botonEmpezar != null) botonEmpezar.interactable = true;
         if (textoEstado != null) textoEstado.text = $"Sin red ({cause}). Modo local activado.";
     }
 
     public void IniciarJuego()
     {
+        string destino = string.IsNullOrEmpty(escenaDestino) ? "GameScene" : escenaDestino;
+
         if (PhotonNetwork.IsConnected && PhotonNetwork.IsMasterClient)
         {
-            PhotonNetwork.LoadLevel(escenaDestino);
+            PhotonNetwork.LoadLevel(destino);
         }
         else
         {
-            // Fallback offline: activa modo simulado de Photon y carga la escena
+            // Fallback offline: modo simulado de Photon
             PhotonNetwork.OfflineMode = true;
-            SceneManager.LoadScene(escenaDestino);
+            SceneManager.LoadScene(destino);
         }
     }
 }

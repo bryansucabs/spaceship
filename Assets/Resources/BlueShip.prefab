@@ -497,8 +497,7 @@ MonoBehaviour:
   receptorUDP: {fileID: 0}
   multiplicadorVelocidadZ: 1
   speed: 40
-  velocidadLateralTeclado: 40
-  maxYawAngle: 45
+  yawTurnSpeed: 100
   maxRollAngle: 90
   maxPitchAngle: 85
   deadzoneAngle: 10

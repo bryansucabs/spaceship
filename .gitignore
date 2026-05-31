@@ -47,3 +47,4 @@ venv/
 # ── Herramientas locales (Claude Code / MCP) ─────────────────────────────────
 .claude/
 ProjectSettings/McpUnitySettings.json
+.utmp/
