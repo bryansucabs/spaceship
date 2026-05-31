@@ -2,27 +2,30 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine.UI;
-using TMPro; 
+using UnityEngine.SceneManagement;
+using TMPro;
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
-    public Button botonEmpezar; // Arrastra tu botón aquí desde el Inspector
-    public TextMeshProUGUI textoEstado; // Opcional: un texto para ver qué pasa
+    public Button botonEmpezar;
+    public TextMeshProUGUI textoEstado;
+    public string escenaDestino = "MapTest";
 
     void Start()
     {
-        PhotonNetwork.AutomaticallySyncScene = true; 
-        botonEmpezar.interactable = false; // Desactiva el botón al inicio
+        PhotonNetwork.AutomaticallySyncScene = true;
+        botonEmpezar.interactable = false;
+        if (textoEstado != null) textoEstado.text = "Conectando...";
         PhotonNetwork.ConnectUsingSettings();
     }
 
     public override void OnConnectedToMaster()
     {
+        if (textoEstado != null) textoEstado.text = "Buscando sala...";
         PhotonNetwork.JoinOrCreateRoom("TunelCompetitivo", new RoomOptions() { MaxPlayers = 2 }, TypedLobby.Default);
     }
 
     public override void OnJoinedRoom()
     {
-        // Si somos el Master, encendemos el botón de Start
         if (PhotonNetwork.IsMasterClient)
         {
             botonEmpezar.interactable = true;
@@ -30,19 +33,29 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         }
         else
         {
-            // El jugador 2 no puede pulsar el botón, solo espera
             botonEmpezar.interactable = false;
             if (textoEstado != null) textoEstado.text = "Conectado. Esperando a que el Host inicie...";
         }
     }
 
-    // ESTA ES LA FUNCIÓN DEL BOTÓN
+    public override void OnDisconnected(DisconnectCause cause)
+    {
+        // Si Photon falla, habilitar el botón para test offline
+        botonEmpezar.interactable = true;
+        if (textoEstado != null) textoEstado.text = $"Sin red ({cause}). Modo local activado.";
+    }
+
     public void IniciarJuego()
     {
-        if (PhotonNetwork.IsMasterClient)
+        if (PhotonNetwork.IsConnected && PhotonNetwork.IsMasterClient)
         {
-            // Como AutomaticallySyncScene está en true, esto arrastrará al jugador 2 también
-            PhotonNetwork.LoadLevel("GameScene"); // Pon el nombre exacto de tu escena de juego
+            PhotonNetwork.LoadLevel(escenaDestino);
+        }
+        else
+        {
+            // Fallback offline: activa modo simulado de Photon y carga la escena
+            PhotonNetwork.OfflineMode = true;
+            SceneManager.LoadScene(escenaDestino);
         }
     }
 }
