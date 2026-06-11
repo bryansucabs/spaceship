@@ -1731,6 +1731,69 @@ CapsuleCollider:
   m_Height: 4.42
   m_Direction: 2
   m_Center: {x: 0, y: -0.15, z: 0}
+--- !u!1 &6298715558455355860
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 403187388768638939}
+  - component: {fileID: 2758765904126880877}
+  - component: {fileID: 7163474559966118801}
+  m_Layer: 0
+  m_Name: UDPBroadCast
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &403187388768638939
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6298715558455355860}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 144.12093, y: -80.83361, z: -52.835354}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3649475326188427259}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2758765904126880877
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6298715558455355860}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6a77b7fef6a5da899695fb5c1aed6db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UDPBroadcast
+  nave: {fileID: 0}
+  port: 11011
+  intervaloBroadcast: 5
+--- !u!114 &7163474559966118801
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6298715558455355860}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f5a22f4d48fb32d6a384bb7fbffcbc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UDPBroadcastPUN
+  nave: {fileID: 0}
+  port: 11011
+  intervaloBroadcast: 5
 --- !u!1 &6326864586055472304
 GameObject:
   m_ObjectHideFlags: 0
@@ -2473,6 +2536,7 @@ Transform:
   - {fileID: 5465924733743873570}
   - {fileID: 4686721202213671026}
   - {fileID: 2996908546064065820}
+  - {fileID: 403187388768638939}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &1393731642572462950
@@ -2623,7 +2687,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05a4168004ddc7fa7a605ffafba60ad2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AccelHUD
-  receptorUDP: {fileID: 0}
+  receptorUDP: {fileID: 2679683246103936867}
   marginLeft: 30
   marginBottom: 40
   barWidth: 28
@@ -2763,7 +2827,7 @@ MonoBehaviour:
   networkSend: {fileID: 0}
   rotacionRecibidaCelular: {x: 0, y: 0, z: 0, w: 1}
   autoavance: 1
-  receptorUDP: {fileID: 0}
+  receptorUDP: {fileID: 2679683246103936867}
   multiplicadorVelocidadZ: 1
   speed: 40
   yawTurnSpeed: 100

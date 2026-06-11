@@ -21,7 +21,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Loby.unity
     guid: 0e243f4745f89e79ca7accbd3beb5971
   - enabled: 0
-    path: Assets/Scenes/GameScene2.unity
+    path: Assets/Scenes/IMPOSTORTest.unity
     guid: f5cf3e45517f894efad8fd79f6d9c7d8
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
