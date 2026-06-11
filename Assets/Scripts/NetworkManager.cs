@@ -2,15 +2,12 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using TMPro;
 
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
     public Button botonEmpezar;
     public TextMeshProUGUI textoEstado;
-    [Tooltip("Solo para LobyV3/MapTest. Dejar vacío en los otros lobbies.")]
-    public string escenaDestino = "";
 
     void Start()
     {
@@ -90,26 +87,11 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             textoEstado.text = "Error: No se encontró la sala. Asegúrate de que la PC abrió el juego primero.";
     }
 
-    public override void OnDisconnected(DisconnectCause cause)
-    {
-        // Modo offline para pruebas (usado por LobyV3 → MapTest)
-        if (botonEmpezar != null) botonEmpezar.interactable = true;
-        if (textoEstado != null) textoEstado.text = $"Sin red ({cause}). Modo local activado.";
-    }
-
     public void IniciarJuego()
     {
-        string destino = string.IsNullOrEmpty(escenaDestino) ? "GameScene" : escenaDestino;
-
-        if (PhotonNetwork.IsConnected && PhotonNetwork.IsMasterClient)
+        if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.CurrentRoom.MaxPlayers)
         {
-            PhotonNetwork.LoadLevel(destino);
-        }
-        else
-        {
-            // Fallback offline: modo simulado de Photon
-            PhotonNetwork.OfflineMode = true;
-            SceneManager.LoadScene(destino);
+            PhotonNetwork.LoadLevel("GameScene");
         }
     }
 }

@@ -2767,6 +2767,7 @@ MonoBehaviour:
   multiplicadorVelocidadZ: 1
   speed: 40
   yawTurnSpeed: 100
+  maxYawAngle: 85
   maxRollAngle: 90
   maxPitchAngle: 85
   deadzoneAngle: 10
