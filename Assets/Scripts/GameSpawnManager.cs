@@ -47,7 +47,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
         {
             GameObject miNave = PhotonNetwork.Instantiate(redShipPrefab, spawnPointAzul.position, spawnPointAzul.rotation);
             var controller = miNave.GetComponent<StarshipControllerPun>();
-            if (controller != null) { controller.esJugadorTeclado = true; controller.autoavance = false; }
+            if (controller != null) { controller.esJugadorTeclado = false; controller.autoavance = false; }
             udpManager = miNave.GetComponent<UDPManagerPUN>();
             if (udpManager != null && controller != null) udpManager.nave = controller;
             Debug.Log("[SPAWN] RedShip — control por celular UDP.");
