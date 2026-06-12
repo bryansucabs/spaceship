@@ -170,8 +170,12 @@ public class OverlordHUD : MonoBehaviourPun
 
         // Aplicar efectos inmediatamente en esta máquina (no depende del RPC local)
         AplicarEfectosSabotaje(SABOTAJE_DURACION);
-        // Enviar solo a los otros clientes — el receptor es OverlordRPCBridge en el ROOT
-        photonView.RPC(nameof(RPC_IniciarSabotaje), RpcTarget.Others, SABOTAJE_DURACION);
+        // Enviar RPC via OverlordRPCBridge (en el ROOT, donde PhotonView vive)
+        var bridge = GetComponentInParent<OverlordRPCBridge>();
+        if (bridge != null)
+            bridge.EnviarRPC_Sabotaje(SABOTAJE_DURACION);
+        else
+            Debug.LogError("[HUD] OverlordRPCBridge no encontrado en el padre");
     }
 
     public void AplicarEfectosSabotaje(float duracion)
@@ -337,8 +341,12 @@ public class OverlordHUD : MonoBehaviourPun
         imgRomper.color = RomperUsado;
         txtRomperLabel.text = "ROTO";
         AplicarRotacionPasadizo(nombre);
-        // Enviar solo a los otros clientes — el receptor es OverlordRPCBridge en el ROOT
-        photonView.RPC(nameof(RPC_RomperPasadizo), RpcTarget.Others, nombre);
+        // Enviar RPC via OverlordRPCBridge (en el ROOT, donde PhotonView vive)
+        var bridge = GetComponentInParent<OverlordRPCBridge>();
+        if (bridge != null)
+            bridge.EnviarRPC_RomperPasadizo(nombre);
+        else
+            Debug.LogError("[HUD] OverlordRPCBridge no encontrado en el padre");
     }
 
     public void AplicarRotacionPasadizo(string nombre)
@@ -418,8 +426,12 @@ public class OverlordHUD : MonoBehaviourPun
         txtFrenoLabel.text = "ACTIVO";
         txtFrenoTimer.text = Mathf.CeilToInt(FRENOS_DURACION) + "s";
         AplicarEfectosFreno(FRENOS_DURACION);
-        // Enviar solo a los otros clientes — el receptor es OverlordRPCBridge en el ROOT
-        photonView.RPC(nameof(RPC_IniciarFreno), RpcTarget.Others, FRENOS_DURACION);
+        // Enviar RPC via OverlordRPCBridge (en el ROOT, donde PhotonView vive)
+        var bridge = GetComponentInParent<OverlordRPCBridge>();
+        if (bridge != null)
+            bridge.EnviarRPC_Freno(FRENOS_DURACION);
+        else
+            Debug.LogError("[HUD] OverlordRPCBridge no encontrado en el padre");
     }
 
     public void AplicarEfectosFreno(float duracion)
