@@ -168,10 +168,13 @@ public class OverlordHUD : MonoBehaviourPun
         txtImpostorLabel.text = "ACTIVO";
         txtImpostorTimer.text = Mathf.CeilToInt(SABOTAJE_DURACION) + "s";
 
-        // Aplicar efectos inmediatamente en esta máquina (no depende del RPC local)
+        // Aplicar efectos inmediatamente en esta máquina
         AplicarEfectosSabotaje(SABOTAJE_DURACION);
-        // Enviar solo a los otros clientes — el receptor es OverlordRPCBridge en el ROOT
-        photonView.RPC(nameof(RPC_IniciarSabotaje), RpcTarget.Others, SABOTAJE_DURACION);
+        // Enviar al resto — GameSpawnManager tiene PhotonView en root de escena MAP
+        var spawner = FindFirstObjectByType<GameSpawnManager>();
+        if (spawner != null)
+            spawner.photonView.RPC(nameof(GameSpawnManager.RPC_IniciarSabotaje),
+                                   RpcTarget.Others, SABOTAJE_DURACION);
     }
 
     public void AplicarEfectosSabotaje(float duracion)
@@ -337,8 +340,10 @@ public class OverlordHUD : MonoBehaviourPun
         imgRomper.color = RomperUsado;
         txtRomperLabel.text = "ROTO";
         AplicarRotacionPasadizo(nombre);
-        // Enviar solo a los otros clientes — el receptor es OverlordRPCBridge en el ROOT
-        photonView.RPC(nameof(RPC_RomperPasadizo), RpcTarget.Others, nombre);
+        var spawnerR = FindFirstObjectByType<GameSpawnManager>();
+        if (spawnerR != null)
+            spawnerR.photonView.RPC(nameof(GameSpawnManager.RPC_RomperPasadizo),
+                                    RpcTarget.Others, nombre);
     }
 
     public void AplicarRotacionPasadizo(string nombre)
@@ -418,8 +423,10 @@ public class OverlordHUD : MonoBehaviourPun
         txtFrenoLabel.text = "ACTIVO";
         txtFrenoTimer.text = Mathf.CeilToInt(FRENOS_DURACION) + "s";
         AplicarEfectosFreno(FRENOS_DURACION);
-        // Enviar solo a los otros clientes — el receptor es OverlordRPCBridge en el ROOT
-        photonView.RPC(nameof(RPC_IniciarFreno), RpcTarget.Others, FRENOS_DURACION);
+        var spawnerF = FindFirstObjectByType<GameSpawnManager>();
+        if (spawnerF != null)
+            spawnerF.photonView.RPC(nameof(GameSpawnManager.RPC_IniciarFreno),
+                                    RpcTarget.Others, FRENOS_DURACION);
     }
 
     public void AplicarEfectosFreno(float duracion)

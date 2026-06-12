@@ -87,4 +87,38 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
         PhotonNetwork.CurrentRoom.IsVisible = false;
         Debug.Log("[Lobby] Sala cerrada con éxito por seguridad de juego.");
     }
+
+    // ── RPCs de sabotaje del Overlord ─────────────────────────────────────────
+    // GameSpawnManager vive en la raíz de la escena MAP con su propio PhotonView.
+    // PUN2 encuentra estos métodos correctamente porque el PhotonView está en el
+    // mismo GameObject que GameSpawnManager (no en un hijo).
+
+    [PunRPC]
+    public void RPC_IniciarSabotaje(float duracion)
+    {
+        foreach (var door in FindObjectsByType<DoorTrigger>(FindObjectsSortMode.None))
+            door.ForzarCerrar();
+        foreach (var alerta in FindObjectsByType<ShipSabotageAlert>(FindObjectsSortMode.None))
+            alerta.MostrarAlerta(duracion);
+        var go = new GameObject("_SabotajeTimer");
+        DontDestroyOnLoad(go);
+        go.AddComponent<SabotajeTimerAuxiliar>().Iniciar(duracion);
+    }
+
+    [PunRPC]
+    public void RPC_IniciarFreno(float duracion)
+    {
+        foreach (var alerta in FindObjectsByType<ShipSabotageAlert>(FindObjectsSortMode.None))
+            alerta.MostrarAlertaRelentizar(duracion);
+        var go = new GameObject("_FrenosTimer");
+        DontDestroyOnLoad(go);
+        go.AddComponent<FrenosTimerAuxiliar>().Iniciar(duracion);
+    }
+
+    [PunRPC]
+    public void RPC_RomperPasadizo(string nombre)
+    {
+        var go = new GameObject("_RotadorPasadizo");
+        go.AddComponent<PasadizoRotadorAuxiliar>().Iniciar(nombre, 80f, 2.5f);
+    }
 }
