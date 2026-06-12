@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8926921024642107703}
   - component: {fileID: 3504975181203113877}
   - component: {fileID: 286111596078563906}
+  - component: {fileID: 7731045892104837291}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -158,6 +159,19 @@ MonoBehaviour:
   zoomMax: 500
   sensibilidadZoomTouch: 0.04
   sensibilidadZoomMouse: 0.1
+--- !u!114 &7731045892104837291
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6201628386078285991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10efc75043632db4b8b3e913b1fd2276, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OverlordHUD
+  velocidadSnap: 8
 --- !u!1 &7795209206385874312
 GameObject:
   m_ObjectHideFlags: 0

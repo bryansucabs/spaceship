@@ -3,41 +3,42 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class DoorTrigger : MonoBehaviour
 {
-    private Animator _animator;
-    private int _insideCount = 0;
+    Animator _animator;
+    int _insideCount = 0;
+    bool _saboteado = false;
 
     void Start()
     {
         _animator = GetComponentInChildren<Animator>();
+        var col = GetComponent<Collider>();
+        if (col != null && !col.isTrigger) col.isTrigger = true;
+    }
 
-        Collider col = GetComponent<Collider>();
-        if (col != null && !col.isTrigger)
-        {
-            col.isTrigger = true;
-        }
+    public void ForzarCerrar()
+    {
+        _saboteado = true;
+        _insideCount = 0;
+        if (_animator != null) _animator.SetBool("character_nearby", false);
+    }
+
+    public void LiberarCierre()
+    {
+        _saboteado = false;
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.attachedRigidbody != null)
-        {
-            _insideCount++;
-            if (_insideCount == 1 && _animator != null)
-            {
-                _animator.SetBool("character_nearby", true);
-            }
-        }
+        if (_saboteado || other.attachedRigidbody == null) return;
+        _insideCount++;
+        if (_insideCount == 1 && _animator != null)
+            _animator.SetBool("character_nearby", true);
     }
 
     void OnTriggerExit(Collider other)
     {
-        if (other.attachedRigidbody != null)
-        {
-            _insideCount = Mathf.Max(0, _insideCount - 1);
-            if (_insideCount == 0 && _animator != null)
-            {
-                _animator.SetBool("character_nearby", false);
-            }
-        }
+        if (other.attachedRigidbody == null) return;
+        _insideCount = Mathf.Max(0, _insideCount - 1);
+        if (_insideCount == 0 && _animator != null)
+            _animator.SetBool("character_nearby", false);
     }
 }

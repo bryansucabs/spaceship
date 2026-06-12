@@ -42,3 +42,9 @@ Assets/Editor/UnityMCPServer.cs.meta
 # ── Configuracion local del editor de codigo ─────────────────────────────────
 .vscode/
 venv/
+*.slnx
+
+# ── Herramientas locales (Claude Code / MCP) ─────────────────────────────────
+.claude/
+ProjectSettings/McpUnitySettings.json
+.utmp/
