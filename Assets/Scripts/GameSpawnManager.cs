@@ -33,16 +33,8 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
     private void VerificarYSpawnear()
     {
         if (yaNaci || !PhotonNetwork.InRoom) return;
-
-        int conectados = PhotonNetwork.CurrentRoom.PlayerCount;
-        int maximos = PhotonNetwork.CurrentRoom.MaxPlayers;
-
-        // Si estamos los 3 completos (o si estás probando tú solo en el editor)
-        if (conectados == maximos || conectados == 1)
-        {
-            yaNaci = true;
-            SpawnearMiRolAsimetrico();
-        }
+        yaNaci = true;
+        SpawnearMiRolAsimetrico();
     }
     
     void SpawnearMiRolAsimetrico()
