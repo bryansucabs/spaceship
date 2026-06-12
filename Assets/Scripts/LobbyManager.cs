@@ -78,7 +78,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         popup.SetActive(false);
         btnIniciar.interactable = false;
 
-        PhotonNetwork.AutomaticallySyncScene = false;
+        PhotonNetwork.AutomaticallySyncScene = true;
         PhotonNetwork.PhotonServerSettings.AppSettings.AppVersion = "1.0_TunelAsimetrico";
         PhotonNetwork.PhotonServerSettings.AppSettings.FixedRegion = "sa";
 
@@ -252,10 +252,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     public void IniciarJuego()
     {
         if (PhotonNetwork.IsMasterClient)
-        {
-            PhotonNetwork.AutomaticallySyncScene = true;
             PhotonNetwork.LoadLevel("MAP");
-        }
     }
 
     // ── HELPERS ───────────────────────────────────────────────────────────────
