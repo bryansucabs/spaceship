@@ -11,7 +11,26 @@ public class DoorTrigger : MonoBehaviour
     {
         _animator = GetComponentInChildren<Animator>();
         var col = GetComponent<Collider>();
-        if (col != null && !col.isTrigger) col.isTrigger = true;
+        ConfigurarColliderTrigger(col);
+    }
+
+    void ConfigurarColliderTrigger(Collider col)
+    {
+        if (col == null || col.isTrigger) return;
+
+        MeshCollider meshCol = col as MeshCollider;
+        if (meshCol != null && !meshCol.convex)
+        {
+            var triggerGO = new GameObject("_TriggerProxy");
+            triggerGO.transform.SetParent(transform, false);
+            var box = triggerGO.AddComponent<BoxCollider>();
+            box.isTrigger = true;
+            box.size = meshCol.bounds.size;
+            box.center = transform.InverseTransformPoint(meshCol.bounds.center);
+            return;
+        }
+
+        col.isTrigger = true;
     }
 
     public void ForzarCerrar()
