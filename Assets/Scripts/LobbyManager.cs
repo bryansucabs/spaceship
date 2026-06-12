@@ -156,27 +156,11 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     // ── INTENTOS DE SELECCIÓN CON VALIDACIÓN ─────────────────────────────────
     void IntentarRedShip()
     {
-        // Solo PC puede elegir RedShip
         if (esTablet)
         {
             MostrarPopup("Este rol es solo para PC.\n\nLa tablet debe elegir ATACANTE.");
             return;
         }
-
-        var faltantes = new System.Text.StringBuilder();
-
-        if (!tieneCamara)
-            faltantes.AppendLine("• No se detecta cámara (necesaria para\n  detección de velocidad con Python)");
-
-        if (!giroConectado)
-            faltantes.AppendLine("• No se detecta la app del giroscopio\n  (abre la app en el celular Android\n  y conéctate a la misma red WiFi)");
-
-        if (faltantes.Length > 0)
-        {
-            MostrarPopup("Faltan requisitos para RED SHIP:\n\n" + faltantes.ToString());
-            return;
-        }
-
         ElegirRol("redship");
     }
 
@@ -270,7 +254,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.IsMasterClient)
         {
             PhotonNetwork.AutomaticallySyncScene = true;
-            PhotonNetwork.LoadLevel("GameScene");
+            PhotonNetwork.LoadLevel("MAP");
         }
     }
 

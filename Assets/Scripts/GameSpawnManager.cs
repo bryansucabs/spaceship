@@ -54,8 +54,9 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
         if (miRol == "redship")
         {
             GameObject miNave = PhotonNetwork.Instantiate(redShipPrefab, spawnPointAzul.position, spawnPointAzul.rotation);
+            miNave.AddComponent<ShipSabotageAlert>();
             var controller = miNave.GetComponent<StarshipControllerPun>();
-            if (controller != null) { controller.esJugadorTeclado = false; controller.autoavance = true; }
+            if (controller != null) { controller.esJugadorTeclado = false; controller.autoavance = false; }
             udpManager = miNave.GetComponent<UDPManagerPUN>();
             if (udpManager != null && controller != null) udpManager.nave = controller;
             Debug.Log("[SPAWN] RedShip — control por celular UDP.");
@@ -63,6 +64,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
         else if (miRol == "blueship")
         {
             GameObject miNave = PhotonNetwork.Instantiate(blueShipPrefab, spawnPointRoja.position, spawnPointRoja.rotation);
+            miNave.AddComponent<ShipSabotageAlert>();
             var controller = miNave.GetComponent<StarshipControllerPun>();
             if (controller != null) { controller.esJugadorTeclado = true; controller.autoavance = false; }
             Debug.Log("[SPAWN] BlueShip — control por teclado.");
@@ -73,31 +75,6 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
             Quaternion rotOvl = spawnPointOverlord != null ? spawnPointOverlord.rotation : Quaternion.identity;
             PhotonNetwork.Instantiate(overlordPrefab, posOvl, rotOvl);
             Debug.Log("[SPAWN] Overlord — vista táctil aérea.");
-
-            // PRUEBA TEMPORAL: spawear ambas naves que se mueven solas
-            if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
-            {
-                Vector3 posAzul = spawnPointRoja != null ? spawnPointRoja.position : new Vector3(-15f, 2f, 0f);
-                Vector3 posRoja = spawnPointAzul  != null ? spawnPointAzul.position  : new Vector3( 15f, 2f, 0f);
-
-                var naveBlue = PhotonNetwork.Instantiate(blueShipPrefab, posAzul, Quaternion.identity);
-                var ctrlBlue = naveBlue.GetComponent<StarshipControllerPun>();
-                if (ctrlBlue != null) { ctrlBlue.esJugadorTeclado = true; ctrlBlue.autoavance = true; ctrlBlue.speed = 120f; }
-                var alBlue = naveBlue.GetComponentInChildren<AudioListener>();
-                if (alBlue != null) alBlue.enabled = false;
-                var camBlue = naveBlue.GetComponentInChildren<Camera>();
-                if (camBlue != null) camBlue.enabled = false; // el HUD del Overlord la activa cuando se necesita
-
-                var naveRed = PhotonNetwork.Instantiate(redShipPrefab, posRoja, Quaternion.identity);
-                var ctrlRed = naveRed.GetComponent<StarshipControllerPun>();
-                if (ctrlRed != null) { ctrlRed.esJugadorTeclado = true; ctrlRed.autoavance = true; ctrlRed.speed = 120f; }
-                var alRed = naveRed.GetComponentInChildren<AudioListener>();
-                if (alRed != null) alRed.enabled = false;
-                var camRed = naveRed.GetComponentInChildren<Camera>();
-                if (camRed != null) camRed.enabled = false;
-
-                Debug.Log("[SPAWN] PRUEBA: BlueShip y RedShip spawneadas a vel=120.");
-            }
 
             if (PhotonNetwork.IsMasterClient) FinalizarLobby();
             else photonView.RPC("RPC_FinalizarLobby", RpcTarget.MasterClient);

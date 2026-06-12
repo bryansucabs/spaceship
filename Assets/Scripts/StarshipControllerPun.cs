@@ -94,7 +94,7 @@ public class StarshipControllerPun : MonoBehaviourPun
             if (Keyboard.current.leftArrowKey.isPressed) rollInput = 1f;
         }
 
-        float velocidadBase = autoavance ? 30f : speed;
+        float velocidadBase = speed;
         float velocidadActual = moveZ * velocidadBase;
         
         rb.linearVelocity = transform.forward * velocidadActual;
@@ -172,7 +172,7 @@ public class StarshipControllerPun : MonoBehaviourPun
 
         if (autoavance)
         {
-            velocidadActual = 60f;
+            velocidadActual = speed;
         }
 
         rb.linearVelocity = transform.forward * velocidadActual;
