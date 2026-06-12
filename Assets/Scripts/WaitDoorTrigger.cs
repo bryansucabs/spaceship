@@ -13,6 +13,8 @@ public class WaitDoorTrigger : MonoBehaviour
     private bool _doorOpened = false;
     private int _insideCount = 0;
 
+    public bool IsPlayerInside => _insideCount > 0;
+
     void Start()
     {
         Collider col = GetComponent<Collider>();
@@ -91,6 +93,12 @@ public class WaitDoorTrigger : MonoBehaviour
     {
         if (_doorOpened) return 1f;
         return Mathf.Clamp01(_timer / waitTime);
+    }
+
+    public float GetRemainingTime()
+    {
+        if (_doorOpened) return 0f;
+        return Mathf.Max(0f, waitTime - _timer);
     }
 
     public bool IsDoorOpened()
