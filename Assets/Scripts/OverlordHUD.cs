@@ -140,7 +140,8 @@ public class OverlordHUD : MonoBehaviourPun
     {
         PararCorrutinasVista();
         objetivoSnap = null;
-        var shipCam = nave.GetComponentInChildren<Camera>();
+        // true = incluir inactivos: NetworkSetup desactiva la Camera hija en clientes no-propietarios
+        var shipCam = nave.GetComponentInChildren<Camera>(true);
         if (shipCam == null) { Debug.LogWarning("[HUD] La nave " + nave.name + " no tiene cámara hija"); return; }
         if (camShipActiva != null && camShipActiva != shipCam) camShipActiva.enabled = false;
         camShipActiva = shipCam;
@@ -169,11 +170,11 @@ public class OverlordHUD : MonoBehaviourPun
 
         // Aplicar efectos inmediatamente en esta máquina (no depende del RPC local)
         AplicarEfectosSabotaje(SABOTAJE_DURACION);
-        // Enviar solo a los otros clientes
+        // Enviar solo a los otros clientes — el receptor es OverlordRPCBridge en el ROOT
         photonView.RPC(nameof(RPC_IniciarSabotaje), RpcTarget.Others, SABOTAJE_DURACION);
     }
 
-    void AplicarEfectosSabotaje(float duracion)
+    public void AplicarEfectosSabotaje(float duracion)
     {
         foreach (var door in FindObjectsByType<DoorTrigger>(FindObjectsSortMode.None))
             door.ForzarCerrar();
@@ -184,7 +185,6 @@ public class OverlordHUD : MonoBehaviourPun
         go.AddComponent<SabotajeTimerAuxiliar>().Iniciar(duracion);
     }
 
-    [PunRPC]
     void RPC_IniciarSabotaje(float duracion) => AplicarEfectosSabotaje(duracion);
 
     void ActualizarBotonImpostor()
@@ -337,16 +337,16 @@ public class OverlordHUD : MonoBehaviourPun
         imgRomper.color = RomperUsado;
         txtRomperLabel.text = "ROTO";
         AplicarRotacionPasadizo(nombre);
+        // Enviar solo a los otros clientes — el receptor es OverlordRPCBridge en el ROOT
         photonView.RPC(nameof(RPC_RomperPasadizo), RpcTarget.Others, nombre);
     }
 
-    void AplicarRotacionPasadizo(string nombre)
+    public void AplicarRotacionPasadizo(string nombre)
     {
         var go = new GameObject("_RotadorPasadizo");
         go.AddComponent<PasadizoRotadorAuxiliar>().Iniciar(nombre, 80f, 2.5f);
     }
 
-    [PunRPC]
     void RPC_RomperPasadizo(string nombre) => AplicarRotacionPasadizo(nombre);
 
     void ColorearCorredor(string nombre, Color color,
@@ -418,10 +418,11 @@ public class OverlordHUD : MonoBehaviourPun
         txtFrenoLabel.text = "ACTIVO";
         txtFrenoTimer.text = Mathf.CeilToInt(FRENOS_DURACION) + "s";
         AplicarEfectosFreno(FRENOS_DURACION);
+        // Enviar solo a los otros clientes — el receptor es OverlordRPCBridge en el ROOT
         photonView.RPC(nameof(RPC_IniciarFreno), RpcTarget.Others, FRENOS_DURACION);
     }
 
-    void AplicarEfectosFreno(float duracion)
+    public void AplicarEfectosFreno(float duracion)
     {
         foreach (var alerta in FindObjectsByType<ShipSabotageAlert>(FindObjectsSortMode.None))
             alerta.MostrarAlertaRelentizar(duracion);
@@ -430,7 +431,6 @@ public class OverlordHUD : MonoBehaviourPun
         go.AddComponent<FrenosTimerAuxiliar>().Iniciar(duracion);
     }
 
-    [PunRPC]
     void RPC_IniciarFreno(float duracion) => AplicarEfectosFreno(duracion);
 
     void ActualizarBotonFreno()
