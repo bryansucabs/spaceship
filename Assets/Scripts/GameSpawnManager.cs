@@ -46,7 +46,6 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
         if (miRol == "redship")
         {
             GameObject miNave = PhotonNetwork.Instantiate(redShipPrefab, spawnPointAzul.position, spawnPointAzul.rotation);
-            miNave.AddComponent<ShipSabotageAlert>();
             var controller = miNave.GetComponent<StarshipControllerPun>();
             if (controller != null) { controller.esJugadorTeclado = true; controller.autoavance = false; }
             udpManager = miNave.GetComponent<UDPManagerPUN>();
@@ -56,7 +55,6 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
         else if (miRol == "blueship")
         {
             GameObject miNave = PhotonNetwork.Instantiate(blueShipPrefab, spawnPointRoja.position, spawnPointRoja.rotation);
-            miNave.AddComponent<ShipSabotageAlert>();
             var controller = miNave.GetComponent<StarshipControllerPun>();
             if (controller != null) { controller.esJugadorTeclado = true; controller.autoavance = false; }
             Debug.Log("[SPAWN] BlueShip — control por teclado.");

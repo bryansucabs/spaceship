@@ -39,9 +39,13 @@ public class StarshipControllerPun : MonoBehaviourPun
     {
         rb = GetComponent<Rigidbody>();
 
-        // Búsqueda automática de referencias en red
         if (receptorUDP == null) receptorUDP = FindFirstObjectByType<UDPReceiver>();
         if (networkSend == null) networkSend = FindFirstObjectByType<NetworkSend>();
+
+        // ShipSabotageAlert solo en el cliente dueño, así el RPC del Overlord
+        // llega al componente correcto en cada máquina de cada nave.
+        if (photonView.IsMine && GetComponent<ShipSabotageAlert>() == null)
+            gameObject.AddComponent<ShipSabotageAlert>();
     }
 
     void Update()

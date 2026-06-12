@@ -79,6 +79,9 @@ public class OverlordHUD : MonoBehaviourPun
     void Awake()
     {
         cam = GetComponent<Camera>();
+        // Solo el Overlord dueño crea la UI — en los clientes de naves no se crea nada.
+        // El componente sigue vivo para recibir RPCs.
+        if (!photonView.IsMine) return;
         CrearCanvasHUD();
         CrearMarcadorNave(ref marcadorRojo, "▲ NAVE ROJA",  new Color(1f, 0.2f, 0.2f));
         CrearMarcadorNave(ref marcadorAzul, "▲ NAVE AZUL",  new Color(0.3f, 0.6f, 1f));
@@ -86,13 +89,14 @@ public class OverlordHUD : MonoBehaviourPun
 
     void Start()
     {
-        // El botón impostor solo aparece en la máquina del Overlord
-        if (photonView.IsMine)
-            CrearBotonImpostor(canvasHUD.transform);
+        if (!photonView.IsMine) return;
+        CrearBotonImpostor(canvasHUD.transform);
     }
 
     void Update()
     {
+        if (!photonView.IsMine) return;
+
         if (objetivoSnap != null)
         {
             Vector3 destino = new Vector3(objetivoSnap.position.x,
