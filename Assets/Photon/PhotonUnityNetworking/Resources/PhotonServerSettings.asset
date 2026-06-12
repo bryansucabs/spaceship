@@ -40,6 +40,9 @@ MonoBehaviour:
   - Fire
   - RespawnSpaceship
   - RPC_FinalizarLobby
+  - RPC_IniciarFreno
+  - RPC_IniciarSabotaje
+  - RPC_RomperPasadizo
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1
