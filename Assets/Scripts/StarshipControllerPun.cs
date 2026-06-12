@@ -23,9 +23,9 @@ public class StarshipControllerPun : MonoBehaviourPun
 
     [Header("Configuración de Vuelo")]
     public float speed = 40f;
-    public float yawTurnSpeed = 100f; // Usado solo en teclado ahora
-    public float maxYawAngle = 85f;   // Devuelto de tu script original para celular
-    public float maxRollAngle = 90f;  // Ajustado a 90f como tu script anterior
+    public float yawTurnSpeed = 100f; // Ahora se usa tanto en teclado como en celular
+    public float maxYawAngle = 85f;   // (Ya no se usará para el celular, pero lo dejamos por si acaso)
+    public float maxRollAngle = 90f;  
     public float maxPitchAngle = 85f;
 
     [Header("Zona Muerta")]
@@ -116,7 +116,7 @@ public class StarshipControllerPun : MonoBehaviourPun
         rb.MoveRotation(Quaternion.Euler(smoothPitch, newYaw, smoothRoll));
     }
 
-    // --- LÓGICA 2: CELULAR (DEVUELTA A TU CÓDIGO ORIGINAL) ---
+    // --- LÓGICA 2: CELULAR (Yaw Relativo) ---
     void LogicaMovimientoCelular()
     {
         if (rotacionRecibidaCelular == Quaternion.identity) return;
@@ -181,18 +181,24 @@ public class StarshipControllerPun : MonoBehaviourPun
 
         rb.linearVelocity = transform.forward * velocidadActual;
 
-        // --- GIRO ABSOLUTO INDEPENDIENTE ORIGINAL ---
+        // --- CÁLCULO DE ROTACIÓN (YAW RELATIVO Y CONTINUO) ---
+        
+        // Pitch y Roll siguen siendo absolutos (límites visuales de inclinación)
         float targetVisualPitch = normalizedPitch * maxPitchAngle;
         float targetVisualRoll  = normalizedRoll  * maxRollAngle;
-        float targetVisualYaw   = normalizedYaw   * maxYawAngle; // Restaurado al cálculo absoluto directo
+        
+        // ¡CAMBIO CLAVE! El Yaw ahora es una velocidad que se suma, igual que en el teclado
+        float rotacionVelocidadYaw = normalizedYaw * yawTurnSpeed;
 
         Vector3 currentAngles = rb.rotation.eulerAngles;
 
         float smoothPitch = Mathf.LerpAngle(currentAngles.x, targetVisualPitch, Time.fixedDeltaTime * 10f);
         float smoothRoll  = Mathf.LerpAngle(currentAngles.z, targetVisualRoll,  Time.fixedDeltaTime * 10f);
-        float smoothYaw   = Mathf.LerpAngle(currentAngles.y, targetVisualYaw,   Time.fixedDeltaTime * 10f);
+        
+        // Acumulamos el Yaw de forma continua
+        float newYaw = currentAngles.y + (rotacionVelocidadYaw * Time.fixedDeltaTime);
 
-        rb.MoveRotation(Quaternion.Euler(smoothPitch, smoothYaw, smoothRoll));
+        rb.MoveRotation(Quaternion.Euler(smoothPitch, newYaw, smoothRoll));
     }
 
     public void Calibrate()
