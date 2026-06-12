@@ -16,11 +16,26 @@ public class OverlordRPCBridge : MonoBehaviourPun
     }
 
     [PunRPC]
-    void RPC_IniciarSabotaje(float duracion) => _hud?.AplicarEfectosSabotaje(duracion);
+    public void RPC_IniciarSabotaje(float duracion) => _hud?.AplicarEfectosSabotaje(duracion);
 
     [PunRPC]
-    void RPC_IniciarFreno(float duracion) => _hud?.AplicarEfectosFreno(duracion);
+    public void RPC_IniciarFreno(float duracion) => _hud?.AplicarEfectosFreno(duracion);
 
     [PunRPC]
-    void RPC_RomperPasadizo(string nombre) => _hud?.AplicarRotacionPasadizo(nombre);
+    public void RPC_RomperPasadizo(string nombre) => _hud?.AplicarRotacionPasadizo(nombre);
+
+    public void EnviarRPC_Sabotaje(float duracion)
+    {
+        photonView.RPC(nameof(RPC_IniciarSabotaje), RpcTarget.Others, duracion);
+    }
+
+    public void EnviarRPC_Freno(float duracion)
+    {
+        photonView.RPC(nameof(RPC_IniciarFreno), RpcTarget.Others, duracion);
+    }
+
+    public void EnviarRPC_RomperPasadizo(string nombre)
+    {
+        photonView.RPC(nameof(RPC_RomperPasadizo), RpcTarget.Others, nombre);
+    }
 }

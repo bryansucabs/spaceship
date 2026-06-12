@@ -170,7 +170,6 @@ public class OverlordHUD : MonoBehaviourPun
 
         // Aplicar efectos inmediatamente en esta máquina
         AplicarEfectosSabotaje(SABOTAJE_DURACION);
-        // Enviar al resto — GameSpawnManager tiene PhotonView en root de escena MAP
         var spawner = FindFirstObjectByType<GameSpawnManager>();
         if (spawner != null)
             spawner.photonView.RPC(nameof(GameSpawnManager.RPC_IniciarSabotaje),
