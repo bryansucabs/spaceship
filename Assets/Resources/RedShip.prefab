@@ -1837,7 +1837,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f5a22f4d48fb32d6a384bb7fbffcbc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UDPBroadcastPUN
-  nave: {fileID: 0}
+  nave: {fileID: 1153867744579496735}
   port: 11011
   intervaloBroadcast: 5
 --- !u!1 &6326864586055472304
@@ -2873,7 +2873,7 @@ MonoBehaviour:
   esJugadorTeclado: 0
   networkSend: {fileID: 4615079731571879737}
   rotacionRecibidaCelular: {x: 0, y: 0, z: 0, w: 1}
-  autoavance: 1
+  autoavance: 0
   receptorUDP: {fileID: 2679683246103936867}
   multiplicadorVelocidadZ: 1
   speed: 40
@@ -2935,7 +2935,7 @@ MonoBehaviour:
   observableSearch: 2
   ObservedComponents:
   - {fileID: 2010215390105765650}
-  sceneViewId: 0
+  sceneViewId: 1
   InstantiationId: 0
   isRuntimeInstantiated: 0
 --- !u!1 &8901045506557795416
