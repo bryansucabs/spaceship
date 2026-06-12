@@ -212,10 +212,11 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         ActualizarBoton(btnOverlord, "overlord", miRol);
 
         int elegidos = ContarElegidos();
-        btnIniciar.interactable = PhotonNetwork.IsMasterClient && elegidos >= 1;
+        bool yoElegi = !string.IsNullOrEmpty(miRol);
+        btnIniciar.interactable = PhotonNetwork.IsMasterClient && yoElegi;
         textoSala.text = elegidos == 0
             ? "Elige tu nave para comenzar"
-            : $"{elegidos}/3 listos";
+            : $"{elegidos}/{PhotonNetwork.CurrentRoom.PlayerCount} listos";
     }
 
     void ActualizarBoton(Button btn, string rol, string miRol)
