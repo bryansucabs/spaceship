@@ -663,6 +663,52 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.22, y: 1.17, z: 0.9}
   m_Center: {x: 0, y: 0.41, z: 0.47}
+--- !u!1 &2579157068350784773
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2451344618020753095}
+  - component: {fileID: 4615079731571879737}
+  m_Layer: 0
+  m_Name: NetworkSend
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2451344618020753095
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2579157068350784773}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -100.99725, y: -2.0253031, z: -95.2849}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3649475326188427259}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4615079731571879737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2579157068350784773}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7b55041ad7b3b2e6801e651c3d1c9eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkSend
+  remoteIP: 
+  port: 11012
 --- !u!1 &3329283368626689388
 GameObject:
   m_ObjectHideFlags: 0
@@ -2537,6 +2583,7 @@ Transform:
   - {fileID: 4686721202213671026}
   - {fileID: 2996908546064065820}
   - {fileID: 403187388768638939}
+  - {fileID: 2451344618020753095}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &1393731642572462950
@@ -2823,8 +2870,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0127cc58fab845f88bf8410ac46a890, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StarshipControllerPun
-  esJugadorTeclado: 1
-  networkSend: {fileID: 0}
+  esJugadorTeclado: 0
+  networkSend: {fileID: 4615079731571879737}
   rotacionRecibidaCelular: {x: 0, y: 0, z: 0, w: 1}
   autoavance: 1
   receptorUDP: {fileID: 2679683246103936867}

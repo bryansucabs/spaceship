@@ -13746,52 +13746,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 226921f67934e375cabf004ab9d96a80, type: 3}
---- !u!1 &1446824695
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1446824697}
-  - component: {fileID: 1446824696}
-  m_Layer: 0
-  m_Name: NetworkSend
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1446824696
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1446824695}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a7b55041ad7b3b2e6801e651c3d1c9eb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NetworkSend
-  remoteIP: 
-  port: 11012
---- !u!4 &1446824697
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1446824695}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.23019, y: 0.26691, z: -6.72941}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1454426082
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16229,7 +16183,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e23e437954f3f92408e8bdaa60e1d9f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundBank
-  networkSend: {fileID: 1446824696}
+  networkSend: {fileID: 0}
   impactoPared: {fileID: 8300000, guid: 5eba5cb222fce074aa5cde85b9b59142, type: 3}
   impactoObstaculo: {fileID: 8300000, guid: 66afcdbb3f4614747a3fdd1b858e5b97, type: 3}
 --- !u!4 &1759195409
@@ -19622,7 +19576,6 @@ SceneRoots:
   - {fileID: 71837952}
   - {fileID: 1787779983}
   - {fileID: 1375361096}
-  - {fileID: 1446824697}
   - {fileID: 1759195409}
   - {fileID: 416415664}
   - {fileID: 1214965627}
