@@ -66,7 +66,7 @@ public class PlayerObjective : MonoBehaviourPun
                 SetObj(ShipObjective.StandInCircle);
             }
             // ZONA DE EXTRACCIÓN REDSHIP
-            else if (_obj == ShipObjective.GoToExtraction && zoneName.Contains("redInit"))
+            else if (_obj == ShipObjective.GoToExtraction && zoneName.Contains("MetaRed"))
             {
                 SetObj(ShipObjective.Completed);
             }
@@ -87,7 +87,7 @@ public class PlayerObjective : MonoBehaviourPun
                     SetObj(ShipObjective.WaitForDoor);
             }
             // ZONA DE EXTRACCIÓN BLUESHIP
-            else if (_obj == ShipObjective.GoToExtraction && zoneName.Contains("blueInit"))
+            else if (_obj == ShipObjective.GoToExtraction && zoneName.Contains("MetaBlue"))
             {
                 SetObj(ShipObjective.Completed);
             }
