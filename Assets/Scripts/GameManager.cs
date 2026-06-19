@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using Photon.Pun;
 
 public class GameManager : MonoBehaviour
 {
@@ -25,17 +26,29 @@ public class GameManager : MonoBehaviour
             var go = new GameObject("ObjectiveManager");
             go.AddComponent<ObjectiveManager>();
         }
-
         IsPlaying = true;
-        _shipHealth = FindFirstObjectByType<ShipHealth>();
     }
 
     void Update()
     {
+        // Buscar la nave local una vez que Photon la haya spawneado
+        if (_shipHealth == null)
+            _shipHealth = FindMyShipHealth();
+
         if (IsPlaying) return;
 
         if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    ShipHealth FindMyShipHealth()
+    {
+        foreach (var sh in FindObjectsByType<ShipHealth>(FindObjectsSortMode.None))
+        {
+            var pv = sh.GetComponentInParent<PhotonView>();
+            if (pv != null && pv.IsMine) return sh;
+        }
+        return null;
     }
 
     public void GameOver(string message)
@@ -71,14 +84,12 @@ public class GameManager : MonoBehaviour
 
     void OnGUI()
     {
+        if (_shipHealth == null) return;
         InitStyles();
 
-        int health = _shipHealth != null ? _shipHealth.currentHealth : 0;
-        int maxHp = _shipHealth != null ? _shipHealth.maxHealth : 5;
-
         string hearts = "";
-        for (int i = 0; i < maxHp; i++)
-            hearts += i < health ? "\u2665 " : "\u2661 ";
+        for (int i = 0; i < _shipHealth.maxHealth; i++)
+            hearts += i < _shipHealth.currentHealth ? "\u2665 " : "\u2661 ";
         GUI.Label(new Rect(20, Screen.height - 50, 300, 40), hearts, _hudStyle);
     }
 
