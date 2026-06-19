@@ -96,7 +96,8 @@ public class ObjectiveManager : MonoBehaviourPunCallbacks
         ApplyObjectiveChange(role, objective);
 
         var pv = GetSpawnerPV();
-        if (pv != null && pv.IsMine)
+        //if (pv != null && pv.IsMine)
+        if (pv != null)
             pv.RPC(nameof(GameSpawnManager.RPC_SyncObjective), RpcTarget.Others, role, (int)objective);
     }
 
