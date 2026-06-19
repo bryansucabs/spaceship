@@ -7,7 +7,7 @@ public class WaitDoorTrigger : MonoBehaviour
     [SerializeField] private Animator doorAnimator;
 
     [Header("Settings")]
-    [SerializeField] private float waitTime = 15f;
+    [SerializeField] private float waitTime = 5f;
 
     private float _timer = 0f;
     private bool _doorOpened = false;
