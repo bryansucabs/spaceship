@@ -19,7 +19,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
 
     void Start()
     {
-        // Al cargar la escena, intentamos spawnear inmediatamente si la sala ya está completa
+        new GameObject("_LimiteMapa").AddComponent<LimiteMapa>();
         VerificarYSpawnear();
     }
     
@@ -142,5 +142,25 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
         ObjectiveManager.Instance.isGameOver = true;
         ObjectiveManager.Instance.winner = winnerResult;
         ObjectiveManager.Instance.SetEndMessageForRole(winnerResult);
+    }
+}
+
+// Esfera invisible que rodea todo el mapa. Si una nave escapa por cualquier hueco
+// (por ejemplo la juntura del pasadizo girado), la atrapa y la regresa adentro.
+public class LimiteMapa : MonoBehaviour
+{
+    void Awake()
+    {
+        var col = gameObject.AddComponent<SphereCollider>();
+        col.radius = 350f;
+        col.isTrigger = true;
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        var rb = other.attachedRigidbody;
+        if (rb == null) return;
+        Vector3 dir = (transform.position - other.transform.position).normalized;
+        rb.linearVelocity = dir * Mathf.Max(rb.linearVelocity.magnitude, 30f);
     }
 }

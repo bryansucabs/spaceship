@@ -805,26 +805,28 @@ public class MuroInvisiblePasadizo : MonoBehaviour
     void Awake()
     {
         var col = gameObject.AddComponent<SphereCollider>();
-        col.radius = 16f;   // cubre todo el largo del corredor (~28 u) más margen
+        col.radius = 22f;   // cubre los extremos del corredor girado + márgenes de juntura
         col.isTrigger = true;
     }
 
     void OnTriggerEnter(Collider other)
     {
-        Repeler(other, 18f);   // impulso fuerte al entrar
+        Repeler(other, 20f);   // impulso fuerte al entrar
     }
 
     void OnTriggerStay(Collider other)
     {
-        Repeler(other, 0f);    // mantiene la nave fuera mientras siga presionando W
+        Repeler(other, 0f);    // mantiene la nave dentro del corredor
     }
 
     void Repeler(Collider other, float velMinima)
     {
         var rb = other.attachedRigidbody;
         if (rb == null) return;
-        Vector3 dir = other.transform.position - transform.position;
-        if (dir.sqrMagnitude < 0.001f) dir = Vector3.right;
+        // Empuja HACIA el centro del corredor girado (inward) para cerrar los huecos
+        // de juntura. Antes era outward, lo que enviaba las naves al exterior del mapa.
+        Vector3 dir = transform.position - other.transform.position;
+        if (dir.sqrMagnitude < 0.001f) dir = Vector3.back;
         dir.Normalize();
         float mag = Mathf.Max(rb.linearVelocity.magnitude, velMinima);
         rb.linearVelocity = dir * mag;
