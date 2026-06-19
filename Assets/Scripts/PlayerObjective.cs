@@ -12,9 +12,9 @@ public class PlayerObjective : MonoBehaviourPun
     private bool _triggeredOut = false;
     private bool _triggeredMsg2 = false;
 
-    [Header("Distancias")]
+    [Header("Distancias de Detección")]
     public float detectRange = 20f;
-    public float extractRange = 14f;
+    // Eliminamos 'extractRange' porque ahora las Zonas nos avisan directamente
 
     void Start()
     {
@@ -42,39 +42,54 @@ public class PlayerObjective : MonoBehaviourPun
         }
     }
 
-    void OnTriggerEnter(Collider other)
+    /// <summary>
+    /// Este método ahora es llamado por el script ZoneTrigger 
+    /// que está en los BoxColliders de la escena.
+    /// </summary>
+    public void HandleTrigger(string zoneName)
     {
+        // Seguridad: Solo procesar si este jugador nos pertenece en red
         if (!photonView.IsMine) return;
-        string n = other.gameObject.name;
-        Debug.LogWarning("[PlayerObjective] OnTriggerEnter: " + n);
+        
+        Debug.LogWarning("[PlayerObjective] Entrando a la zona: " + zoneName);
 
         if (playerRole == "redship")
         {
-            if (n == "out_red" && !_triggeredOut)
+            if (zoneName == "out_red" && !_triggeredOut)
             {
                 _triggeredOut = true;
                 TriggerMessage.Mostrar("Dir\u00edjase a puerta izquierda", 6f);
             }
-            else if (n == "red_message2" && !_triggeredMsg2)
+            else if (zoneName == "red_message2" && !_triggeredMsg2)
             {
                 _triggeredMsg2 = true;
                 SetObj(ShipObjective.StandInCircle);
             }
+            // ZONA DE EXTRACCIÓN REDSHIP
+            else if (_obj == ShipObjective.GoToExtraction && zoneName.Contains("redInit"))
+            {
+                SetObj(ShipObjective.Completed);
+            }
         }
         else if (playerRole == "blueship")
         {
-            if (n == "out_blue" && !_triggeredOut)
+            if (zoneName == "out_blue" && !_triggeredOut)
             {
                 _triggeredOut = true;
                 TriggerMessage.Mostrar("Dir\u00edjase a la puerta derecha", 6f);
             }
-            else if (n == "blue_message2" && !_triggeredMsg2)
+            else if (zoneName == "blue_message2" && !_triggeredMsg2)
             {
                 _triggeredMsg2 = true;
                 if (DoorOpen())
                     SetObj(ShipObjective.StandInCircle);
                 else
                     SetObj(ShipObjective.WaitForDoor);
+            }
+            // ZONA DE EXTRACCIÓN BLUESHIP
+            else if (_obj == ShipObjective.GoToExtraction && zoneName.Contains("blueInit"))
+            {
+                SetObj(ShipObjective.Completed);
             }
         }
     }
@@ -105,10 +120,6 @@ public class PlayerObjective : MonoBehaviourPun
             var c = GameObject.Find("Open_circle_blue1");
             if (c != null && c.GetComponent<WaitDoorTrigger>()?.IsDoorOpened() == true)
                 SetObj(ShipObjective.GoToExtraction);
-        }
-        else if (_obj == ShipObjective.GoToExtraction)
-        {
-            CheckExtract("redInit");
         }
     }
 
@@ -142,10 +153,6 @@ public class PlayerObjective : MonoBehaviourPun
                 GameObject.Find("circle_right")?.GetComponent<WaitDoorTrigger>()?.IsDoorOpened() == true)
                 SetObj(ShipObjective.GoToExtraction);
         }
-        else if (_obj == ShipObjective.GoToExtraction)
-        {
-            CheckExtract("blueInit");
-        }
     }
 
     bool DoorOpen()
@@ -161,15 +168,6 @@ public class PlayerObjective : MonoBehaviourPun
         var go = GameObject.Find(name);
         if (go == null) return false;
         return Vector3.Distance(transform.position, go.transform.position) < range;
-    }
-
-    void CheckExtract(string baseName)
-    {
-        var ex = GameObject.Find(baseName + " (2)");
-        if (ex == null) ex = GameObject.Find(baseName + " (1)");
-        if (ex == null) ex = GameObject.Find(baseName);
-        if (ex != null && Vector3.Distance(transform.position, ex.transform.position) < extractRange)
-            SetObj(ShipObjective.Completed);
     }
 
     void SetObj(ShipObjective next)
