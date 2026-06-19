@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 916602799575160018}
   - component: {fileID: 7593870549926786132}
   - component: {fileID: 4121651926786226087}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -183,7 +183,7 @@ GameObject:
   - component: {fileID: 5468268412321660246}
   - component: {fileID: 8773883101352765285}
   - component: {fileID: 5004633516878870223}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BlueShip
   m_TagString: Untagged
   m_Icon: {fileID: 0}
