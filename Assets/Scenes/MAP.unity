@@ -2154,7 +2154,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0a7ef5d4f40e164197de6b4c7495d54, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  gameDuration: 120
 --- !u!4 &241151716
 Transform:
   m_ObjectHideFlags: 0
@@ -4966,11 +4965,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6929453113478433363, guid: e13a356c25d1b8573b940db0aceb3d61, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 98.89813
+      value: 104
       objectReference: {fileID: 0}
     - target: {fileID: 6929453113478433363, guid: e13a356c25d1b8573b940db0aceb3d61, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.5986085
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6929453113478433363, guid: e13a356c25d1b8573b940db0aceb3d61, type: 3}
       propertyPath: m_LocalPosition.z

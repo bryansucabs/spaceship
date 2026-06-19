@@ -46,6 +46,17 @@ public class StarshipControllerPun : MonoBehaviourPun
         // llega al componente correcto en cada máquina de cada nave.
         if (photonView.IsMine && GetComponent<ShipSabotageAlert>() == null)
             gameObject.AddComponent<ShipSabotageAlert>();
+
+    }
+
+    public void InitPlayerObjective()
+    {
+        if (!photonView.IsMine) return;
+        if (GetComponent<PlayerObjective>() != null) return;
+
+        var obj = gameObject.AddComponent<PlayerObjective>();
+        obj.playerRole = esJugadorTeclado ? "blueship" : "redship";
+        Debug.Log($"[PlayerObjective] Inicializado para rol: {obj.playerRole}");
     }
 
     void Update()

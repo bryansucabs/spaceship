@@ -47,7 +47,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
         {
             GameObject miNave = PhotonNetwork.Instantiate(redShipPrefab, spawnPointAzul.position, spawnPointAzul.rotation);
             var controller = miNave.GetComponent<StarshipControllerPun>();
-            if (controller != null) { controller.esJugadorTeclado = false; controller.autoavance = false; }
+            if (controller != null) { controller.esJugadorTeclado = false; controller.autoavance = false; controller.InitPlayerObjective(); }
             udpManager = miNave.GetComponent<UDPManagerPUN>();
             if (udpManager != null && controller != null) udpManager.nave = controller;
             Debug.Log("[SPAWN] RedShip — control por celular UDP.");
@@ -56,7 +56,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
         {
             GameObject miNave = PhotonNetwork.Instantiate(blueShipPrefab, spawnPointRoja.position, spawnPointRoja.rotation);
             var controller = miNave.GetComponent<StarshipControllerPun>();
-            if (controller != null) { controller.esJugadorTeclado = true; controller.autoavance = false; }
+            if (controller != null) { controller.esJugadorTeclado = true; controller.autoavance = false; controller.InitPlayerObjective(); }
             Debug.Log("[SPAWN] BlueShip — control por teclado.");
         }
         else if (miRol == "overlord")
@@ -120,5 +120,27 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
     {
         var go = new GameObject("_RotadorPasadizo");
         go.AddComponent<PasadizoRotadorAuxiliar>().Iniciar(nombre, 80f, 2.5f);
+    }
+
+    // ── RPCs del sistema de objetivos (ObjectiveManager) ─────────────────────
+
+    [PunRPC]
+    public void RPC_SyncObjective(string role, int objectiveInt)
+    {
+        if (ObjectiveManager.Instance == null) return;
+        ShipObjective obj = (ShipObjective)objectiveInt;
+        if (role == "redship")
+            ObjectiveManager.Instance.redShipObjective = obj;
+        else if (role == "blueship")
+            ObjectiveManager.Instance.blueShipObjective = obj;
+    }
+
+    [PunRPC]
+    public void RPC_GameOver(int winnerResult)
+    {
+        if (ObjectiveManager.Instance == null) return;
+        ObjectiveManager.Instance.isGameOver = true;
+        ObjectiveManager.Instance.winner = winnerResult;
+        ObjectiveManager.Instance.SetEndMessageForRole(winnerResult);
     }
 }
