@@ -6,24 +6,20 @@ public class PlayerObjective : MonoBehaviourPun
     [Header("Rol asignado por StarshipControllerPun")]
     public string playerRole = "";
 
-    private ShipObjective currentObjective = ShipObjective.GoToDoor;
-    private string _currentMessage = "";
-    private float _messageTimer = 0f;
-    private float _proximityTimer = 0f;
+    private ShipObjective _obj = ShipObjective.GoToDoor;
+    private float _pollTimer = 0f;
+    private float _startTimer = 0f;
+    private bool _triggeredOut = false;
+    private bool _triggeredMsg2 = false;
 
-    private bool _leftDoorDone = false;
-    private bool _blueDoorDone = false;
-    private bool _openDoorDone = false;
-
-    [Header("Distancias de deteccion")]
-    public float doorDetectDistance = 18f;
-    public float extractionDetectDistance = 14f;
-    public float openDoorDetectDistance = 18f;
+    [Header("Distancias")]
+    public float detectRange = 20f;
+    public float extractRange = 14f;
 
     void Start()
     {
         if (!photonView.IsMine) return;
-        ShowMessageForCurrentObjective(5f);
+        TriggerMessage.Mostrar(GetMsg(), 30f);
     }
 
     void Update()
@@ -31,236 +27,184 @@ public class PlayerObjective : MonoBehaviourPun
         if (!photonView.IsMine) return;
         if (ObjectiveManager.Instance == null || ObjectiveManager.Instance.isGameOver) return;
 
-        if (_messageTimer > 0f)
-            _messageTimer -= Time.deltaTime;
-
-        _proximityTimer += Time.deltaTime;
-        if (_proximityTimer >= 0.4f)
+        if (_startTimer < 8f && _obj == ShipObjective.GoToDoor)
         {
-            _proximityTimer = 0f;
-            CheckProximityZones();
-            CheckCircleProgress();
+            _startTimer += Time.deltaTime;
+            if (_startTimer >= 5f && _startTimer - Time.deltaTime < 5f)
+                TriggerMessage.Mostrar(GetMsg(), 8f);
+        }
+
+        _pollTimer += Time.deltaTime;
+        if (_pollTimer >= 0.3f)
+        {
+            _pollTimer = 0f;
+            PollZones();
         }
     }
 
-    void CheckProximityZones()
+    void OnTriggerEnter(Collider other)
     {
-        if (playerRole == "redship")
-            CheckRedShipZones();
-        else if (playerRole == "blueship")
-            CheckBlueShipZones();
-    }
-
-    void CheckRedShipZones()
-    {
-        if (currentObjective == ShipObjective.GoToDoor)
-        {
-            if (IsNearAny("Door_door_4_J7_D1", doorDetectDistance))
-            {
-                _leftDoorDone = true;
-                SetObjective(ShipObjective.StandInCircle);
-                return;
-            }
-        }
-        else if (currentObjective == ShipObjective.GoToExtraction)
-        {
-            var ex = FindExtraction("redInit");
-            if (ex != null)
-            {
-                float d = Vector3.Distance(transform.position, ex.transform.position);
-                if (d < extractionDetectDistance)
-                    SetObjective(ShipObjective.Completed);
-            }
-        }
-    }
-
-    void CheckBlueShipZones()
-    {
-        if (currentObjective == ShipObjective.GoToDoor)
-        {
-            var door = GameObject.Find("Door_door_3_BLUE");
-            if (door != null)
-            {
-                float d = Vector3.Distance(transform.position, door.transform.position);
-                if (d < doorDetectDistance)
-                {
-                    _blueDoorDone = true;
-                }
-            }
-
-            var openDoor = GameObject.Find("Open_door_1");
-            if (openDoor != null && !_openDoorDone)
-            {
-                float d = Vector3.Distance(transform.position, openDoor.transform.position);
-                if (d < openDoorDetectDistance)
-                {
-                    _openDoorDone = true;
-                    var animator = openDoor.GetComponentInChildren<Animator>();
-                    if (animator != null && animator.GetBool("character_nearby"))
-                        SetObjective(ShipObjective.StandInCircle);
-                    else
-                        SetObjective(ShipObjective.WaitForDoor);
-                }
-            }
-        }
-        else if (currentObjective == ShipObjective.WaitForDoor)
-        {
-            var openDoor = GameObject.Find("Open_door_1");
-            if (openDoor != null)
-            {
-                float d = Vector3.Distance(transform.position, openDoor.transform.position);
-                if (d < openDoorDetectDistance)
-                {
-                    var animator = openDoor.GetComponentInChildren<Animator>();
-                    if (animator != null && animator.GetBool("character_nearby"))
-                        SetObjective(ShipObjective.StandInCircle);
-                }
-            }
-        }
-        else if (currentObjective == ShipObjective.GoToExtraction)
-        {
-            var ex = FindExtraction("blueInit");
-            if (ex != null)
-            {
-                float d = Vector3.Distance(transform.position, ex.transform.position);
-                if (d < extractionDetectDistance)
-                    SetObjective(ShipObjective.Completed);
-            }
-        }
-    }
-
-    void CheckCircleProgress()
-    {
-        if (currentObjective != ShipObjective.StandInCircle) return;
+        if (!photonView.IsMine) return;
+        string n = other.gameObject.name;
+        Debug.LogWarning("[PlayerObjective] OnTriggerEnter: " + n);
 
         if (playerRole == "redship")
         {
-            var circle = GameObject.Find("Open_circle_blue_2");
-            if (circle != null)
+            if (n == "out_red" && !_triggeredOut)
             {
-                var trigger = circle.GetComponent<WaitDoorTrigger>();
-                if (trigger != null && trigger.IsDoorOpened())
-                    SetObjective(ShipObjective.GoToExtraction);
+                _triggeredOut = true;
+                TriggerMessage.Mostrar("Dir\u00edjase a puerta izquierda", 6f);
+            }
+            else if (n == "red_message2" && !_triggeredMsg2)
+            {
+                _triggeredMsg2 = true;
+                SetObj(ShipObjective.StandInCircle);
             }
         }
         else if (playerRole == "blueship")
         {
-            var circleL = GameObject.Find("circle_left");
-            var circleR = GameObject.Find("circle_right");
-            bool leftDone = circleL != null && circleL.GetComponent<WaitDoorTrigger>()?.IsDoorOpened() == true;
-            bool rightDone = circleR != null && circleR.GetComponent<WaitDoorTrigger>()?.IsDoorOpened() == true;
-            if (leftDone || rightDone)
-                SetObjective(ShipObjective.GoToExtraction);
+            if (n == "out_blue" && !_triggeredOut)
+            {
+                _triggeredOut = true;
+                TriggerMessage.Mostrar("Dir\u00edjase a la puerta derecha", 6f);
+            }
+            else if (n == "blue_message2" && !_triggeredMsg2)
+            {
+                _triggeredMsg2 = true;
+                if (DoorOpen())
+                    SetObj(ShipObjective.StandInCircle);
+                else
+                    SetObj(ShipObjective.WaitForDoor);
+            }
         }
     }
 
-    GameObject FindExtraction(string baseName)
+    void PollZones()
     {
-        string name2 = baseName + " (2)";
-        string name1 = baseName + " (1)";
-        var ex = GameObject.Find(name2);
-        if (ex == null) ex = GameObject.Find(name1);
+        if (playerRole == "redship") PollRed();
+        else PollBlue();
+    }
+
+    void PollRed()
+    {
+        if (_obj == ShipObjective.GoToDoor)
+        {
+            if (!_triggeredOut && IsNear("out_red", detectRange))
+            {
+                _triggeredOut = true;
+                TriggerMessage.Mostrar("Dir\u00edjase a puerta izquierda", 6f);
+            }
+            if (!_triggeredMsg2 && IsNear("red_message2", detectRange))
+            {
+                _triggeredMsg2 = true;
+                SetObj(ShipObjective.StandInCircle);
+            }
+        }
+        else if (_obj == ShipObjective.StandInCircle)
+        {
+            var c = GameObject.Find("Open_circle_blue1");
+            if (c != null && c.GetComponent<WaitDoorTrigger>()?.IsDoorOpened() == true)
+                SetObj(ShipObjective.GoToExtraction);
+        }
+        else if (_obj == ShipObjective.GoToExtraction)
+        {
+            CheckExtract("redInit");
+        }
+    }
+
+    void PollBlue()
+    {
+        if (_obj == ShipObjective.GoToDoor)
+        {
+            if (!_triggeredOut && IsNear("out_blue", detectRange))
+            {
+                _triggeredOut = true;
+                TriggerMessage.Mostrar("Dir\u00edjase a la puerta derecha", 6f);
+            }
+            if (!_triggeredMsg2 && IsNear("blue_message2", detectRange))
+            {
+                _triggeredMsg2 = true;
+                if (DoorOpen())
+                    SetObj(ShipObjective.StandInCircle);
+                else
+                    SetObj(ShipObjective.WaitForDoor);
+            }
+        }
+        else if (_obj == ShipObjective.WaitForDoor)
+        {
+            if (DoorOpen())
+                SetObj(ShipObjective.StandInCircle);
+        }
+        else if (_obj == ShipObjective.StandInCircle)
+        {
+            if (GameObject.Find("Open_circle2")?.GetComponent<WaitDoorTrigger>()?.IsDoorOpened() == true ||
+                GameObject.Find("circle_left")?.GetComponent<WaitDoorTrigger>()?.IsDoorOpened() == true ||
+                GameObject.Find("circle_right")?.GetComponent<WaitDoorTrigger>()?.IsDoorOpened() == true)
+                SetObj(ShipObjective.GoToExtraction);
+        }
+        else if (_obj == ShipObjective.GoToExtraction)
+        {
+            CheckExtract("blueInit");
+        }
+    }
+
+    bool DoorOpen()
+    {
+        var door = GameObject.Find("Open_door_1");
+        if (door == null) return false;
+        var anim = door.GetComponentInChildren<Animator>();
+        return anim != null && anim.GetBool("character_nearby");
+    }
+
+    bool IsNear(string name, float range)
+    {
+        var go = GameObject.Find(name);
+        if (go == null) return false;
+        return Vector3.Distance(transform.position, go.transform.position) < range;
+    }
+
+    void CheckExtract(string baseName)
+    {
+        var ex = GameObject.Find(baseName + " (2)");
+        if (ex == null) ex = GameObject.Find(baseName + " (1)");
         if (ex == null) ex = GameObject.Find(baseName);
-        return ex;
+        if (ex != null && Vector3.Distance(transform.position, ex.transform.position) < extractRange)
+            SetObj(ShipObjective.Completed);
     }
 
-    bool IsNearAny(string baseName, float threshold)
+    void SetObj(ShipObjective next)
     {
-        var go = GameObject.Find(baseName);
-        if (go != null && Vector3.Distance(transform.position, go.transform.position) < threshold)
-            return true;
-        go = GameObject.Find(baseName + " (1)");
-        if (go != null && Vector3.Distance(transform.position, go.transform.position) < threshold)
-            return true;
-        go = GameObject.Find(baseName + " (2)");
-        if (go != null && Vector3.Distance(transform.position, go.transform.position) < threshold)
-            return true;
-        return false;
-    }
-
-    void SetObjective(ShipObjective newObjective)
-    {
-        if (currentObjective == newObjective) return;
-        if (currentObjective == ShipObjective.Completed || currentObjective == ShipObjective.Failed) return;
-
-        currentObjective = newObjective;
-        ShowMessageForCurrentObjective(6f);
-
+        if (_obj == next) return;
+        if (_obj == ShipObjective.Completed || _obj == ShipObjective.Failed) return;
+        _obj = next;
+        TriggerMessage.Mostrar(GetMsg(), 6f);
         if (ObjectiveManager.Instance != null)
-            ObjectiveManager.Instance.UpdateObjective(playerRole, currentObjective);
+            ObjectiveManager.Instance.UpdateObjective(playerRole, _obj);
     }
 
-    void ShowMessageForCurrentObjective(float duration)
-    {
-        _currentMessage = GetMessageForObjective();
-        _messageTimer = duration;
-    }
-
-    string GetMessageForObjective()
+    string GetMsg()
     {
         if (playerRole == "redship")
         {
-            switch (currentObjective)
+            switch (_obj)
             {
-                case ShipObjective.GoToDoor:      return "Diríjase a puerta izquierda";
-                case ShipObjective.StandInCircle: return "Permanezca dentro del círculo para abrir la compuerta";
-                case ShipObjective.GoToExtraction: return "Ahora diríjase al punto de extracción";
-                case ShipObjective.Completed:     return "Extracción completada";
-                default: return "";
+                case ShipObjective.GoToDoor:       return "Dir\u00edjase a puerta izquierda";
+                case ShipObjective.StandInCircle:  return "Dir\u00edjase a la puerta izquierda y active el mecanismo";
+                case ShipObjective.GoToExtraction: return "Ahora dir\u00edjase al punto de extracci\u00f3n";
+                case ShipObjective.Completed:      return "Extracci\u00f3n completada";
             }
         }
-        else if (playerRole == "blueship")
+        else
         {
-            switch (currentObjective)
+            switch (_obj)
             {
-                case ShipObjective.GoToDoor:      return "Diríjase a la puerta derecha";
-                case ShipObjective.WaitForDoor:   return "Esperando que se abra la puerta";
-                case ShipObjective.StandInCircle: return "Espere en el círculo para abrir el camino";
-                case ShipObjective.GoToExtraction: return "Diríjase al punto de extracción";
-                case ShipObjective.Completed:     return "Extracción completada";
-                default: return "";
+                case ShipObjective.GoToDoor:       return "Dir\u00edjase a la puerta derecha";
+                case ShipObjective.WaitForDoor:    return "Esperando a que RedShip abra la puerta";
+                case ShipObjective.StandInCircle:  return "Espere en el c\u00edrculo para abrir el camino";
+                case ShipObjective.GoToExtraction: return "Dir\u00edjase al punto de extracci\u00f3n";
+                case ShipObjective.Completed:      return "Extracci\u00f3n completada";
             }
         }
         return "";
-    }
-
-    void OnGUI()
-    {
-        if (!photonView.IsMine) return;
-        if (currentObjective == ShipObjective.Completed || currentObjective == ShipObjective.Failed) return;
-        if (ObjectiveManager.Instance != null && ObjectiveManager.Instance.isGameOver) return;
-        if (_messageTimer <= 0f || string.IsNullOrEmpty(_currentMessage)) return;
-
-        float maxDuration = 6f;
-        float fadeInOut = 0.6f;
-        float alpha;
-        if (_messageTimer > maxDuration - fadeInOut)
-            alpha = Mathf.Clamp01((maxDuration - _messageTimer) / fadeInOut);
-        else if (_messageTimer < fadeInOut)
-            alpha = Mathf.Clamp01(_messageTimer / fadeInOut);
-        else
-            alpha = 1f;
-
-        var labelStyle = new GUIStyle(GUI.skin.label)
-        {
-            fontSize = 22,
-            fontStyle = FontStyle.Bold,
-            alignment = TextAnchor.MiddleCenter,
-            normal = { textColor = new Color(1f, 1f, 0f, alpha) },
-            wordWrap = true
-        };
-
-        var boxStyle = new GUIStyle(GUI.skin.box)
-        {
-            normal = { textColor = new Color(0f, 0f, 0f, alpha * 0.7f) }
-        };
-
-        float w = Mathf.Min(650, Screen.width - 60);
-        float h = 50;
-        float x = (Screen.width - w) / 2f;
-        float y = 20;
-
-        GUI.Box(new Rect(x - 12, y - 8, w + 24, h + 16), "", boxStyle);
-        GUI.Label(new Rect(x, y, w, h), _currentMessage, labelStyle);
     }
 }
