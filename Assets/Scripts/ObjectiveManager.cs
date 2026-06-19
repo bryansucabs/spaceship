@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Photon.Pun;
 using UnityEngine.SceneManagement;
+using Photon.Pun;
+using Photon.Realtime;
 
 public enum ShipObjective
 {
@@ -13,12 +14,12 @@ public enum ShipObjective
     Failed
 }
 
-public class ObjectiveManager : MonoBehaviour
+public class ObjectiveManager : MonoBehaviourPunCallbacks
 {
     public static ObjectiveManager Instance;
 
-    [Header("Tiempo de partida (5 minutos)")]
-    public float gameDuration = 300f;
+    [Header("Tiempo de partida (2 minutos)")]
+    public float gameDuration = 120f;
 
     public ShipObjective redShipObjective = ShipObjective.GoToDoor;
     public ShipObjective blueShipObjective = ShipObjective.GoToDoor;
@@ -29,8 +30,12 @@ public class ObjectiveManager : MonoBehaviour
     private float _timeLeft;
     private string _endMessage = "";
 
+    private float _lobbyCountdown = 5f;
+    private bool _goingToLobby = false;
+
     private GUIStyle _timerStyle;
     private GUIStyle _endStyle;
+    private GUIStyle _countdownStyle;
     private bool _stylesInitialized = false;
 
     void Awake()
@@ -48,8 +53,15 @@ public class ObjectiveManager : MonoBehaviour
     {
         if (isGameOver)
         {
-            if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            if (_goingToLobby)
+            {
+                _lobbyCountdown -= Time.deltaTime;
+                if (_lobbyCountdown <= 0f)
+                {
+                    _goingToLobby = false;
+                    PhotonNetwork.LeaveRoom();
+                }
+            }
             return;
         }
 
@@ -61,6 +73,17 @@ public class ObjectiveManager : MonoBehaviour
         }
     }
 
+    public override void OnLeftRoom()
+    {
+        SceneManager.LoadScene("LobyV2");
+    }
+
+    void StartLobbyCountdown()
+    {
+        _lobbyCountdown = 5f;
+        _goingToLobby = true;
+    }
+
     PhotonView GetSpawnerPV()
     {
         var spawner = FindFirstObjectByType<GameSpawnManager>();
@@ -69,12 +92,11 @@ public class ObjectiveManager : MonoBehaviour
 
     public void UpdateObjective(string role, ShipObjective objective)
     {
-        if (role == "redship")
-            redShipObjective = objective;
-        else if (role == "blueship")
-            blueShipObjective = objective;
+        if (role == "redship") redShipObjective = objective;
+        else if (role == "blueship") blueShipObjective = objective;
 
-        if (redShipObjective == ShipObjective.Completed && blueShipObjective == ShipObjective.Completed)
+        // Cualquier nave que llegue a su destino = victoria de jugadores
+        if (redShipObjective == ShipObjective.Completed || blueShipObjective == ShipObjective.Completed)
         {
             DeclareP1P2Victory();
             return;
@@ -113,6 +135,7 @@ public class ObjectiveManager : MonoBehaviour
     {
         isGameOver = true;
         _endMessage = message;
+        StartLobbyCountdown();
         if (GameManager.Instance != null)
             GameManager.Instance.NotifyGameOver();
     }
@@ -126,22 +149,21 @@ public class ObjectiveManager : MonoBehaviour
         if (winnerResult == 0)
         {
             if (role == "redship" || role == "blueship")
-                _endMessage = "VICTORIA - Han escapado con exito!";
+                _endMessage = "WINNER\n¡Escaparon con éxito!";
             else if (role == "overlord")
-                _endMessage = "DERROTA - Los jugadores escaparon.";
+                _endMessage = "GAME OVER\nLos jugadores escaparon.";
             else
-                _endMessage = "VICTORIA - Jugadores 1 y 2 ganan.";
+                _endMessage = "WINNER\n¡Jugadores escaparon!";
         }
         else
         {
             if (role == "overlord")
-                _endMessage = "VICTORIA - Los jugadores no escaparon a tiempo.";
-            else if (role == "redship" || role == "blueship")
-                _endMessage = "DERROTA - El tiempo se ha agotado.";
+                _endMessage = "WINNER\n¡El atacante ha ganado!";
             else
-                _endMessage = "DERROTA - El tiempo se ha agotado.";
+                _endMessage = "GAME OVER\nEl atacante ha ganado.";
         }
 
+        StartLobbyCountdown();
         if (GameManager.Instance != null)
             GameManager.Instance.NotifyGameOver();
     }
@@ -153,21 +175,21 @@ public class ObjectiveManager : MonoBehaviour
         int mins = Mathf.FloorToInt(_timeLeft / 60f);
         int secs = Mathf.FloorToInt(_timeLeft % 60f);
 
-        Color timerColor = _timeLeft <= 30f ? Color.red : Color.white;
-        _timerStyle.normal.textColor = timerColor;
-
+        _timerStyle.normal.textColor = _timeLeft <= 30f ? Color.red : Color.white;
         GUI.Label(new Rect(Screen.width / 2f - 70, 15, 140, 45), $"{mins:00}:{secs:00}", _timerStyle);
 
         if (isGameOver)
         {
-            float bw = 520, bh = 200;
+            float bw = 520, bh = 220;
             float bx = (Screen.width - bw) / 2f;
             float by = (Screen.height - bh) / 2f;
 
             GUI.Box(new Rect(bx - 10, by - 10, bw + 20, bh + 20), "");
-            GUI.Label(new Rect(bx, by + 30, bw, 80), _endMessage, _endStyle);
-            GUI.Label(new Rect(bx, by + 130, bw, 40), "Presiona R para reiniciar",
-                new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.MiddleCenter, normal = { textColor = Color.gray } });
+            GUI.Label(new Rect(bx, by + 20, bw, 120), _endMessage, _endStyle);
+
+            int secsLeft = Mathf.CeilToInt(Mathf.Max(0f, _lobbyCountdown));
+            GUI.Label(new Rect(bx, by + 155, bw, 50),
+                $"Volviendo al lobby en {secsLeft}...", _countdownStyle);
         }
     }
 
@@ -186,10 +208,17 @@ public class ObjectiveManager : MonoBehaviour
 
         _endStyle = new GUIStyle(GUI.skin.label)
         {
-            fontSize = 30,
+            fontSize = 34,
             fontStyle = FontStyle.Bold,
             alignment = TextAnchor.MiddleCenter,
             normal = { textColor = Color.yellow }
+        };
+
+        _countdownStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 22,
+            alignment = TextAnchor.MiddleCenter,
+            normal = { textColor = Color.gray }
         };
     }
 

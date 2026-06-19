@@ -43,16 +43,19 @@ public class GameManager : MonoBehaviour
         IsPlaying = false;
         _gameEndedByDestroy = true;
 
-        string role = "";
-        if (Photon.Pun.PhotonNetwork.LocalPlayer.CustomProperties.ContainsKey("rol"))
-            role = Photon.Pun.PhotonNetwork.LocalPlayer.CustomProperties["rol"].ToString();
-
-        string endMsg = "Nave destruida!";
-        if (ObjectiveManager.Instance != null)
+        // Notificar a TODOS los clientes: atacante gana (winnerResult=1).
+        // RpcTarget.All incluye esta misma máquina, así que no hace falta
+        // llamar a ObjectiveManager localmente por separado.
+        var spawner = FindFirstObjectByType<GameSpawnManager>();
+        if (spawner != null && spawner.photonView != null)
+        {
+            spawner.photonView.RPC(
+                nameof(GameSpawnManager.RPC_GameOver), Photon.Pun.RpcTarget.All, 1);
+        }
+        else if (ObjectiveManager.Instance != null)
         {
             ObjectiveManager.Instance.isGameOver = true;
-            endMsg = role == "overlord" ? "VICTORIA - Una nave fue destruida!" : "DERROTA - Tu nave fue destruida.";
-            ObjectiveManager.Instance.NotifyGameOverExternal(endMsg);
+            ObjectiveManager.Instance.NotifyGameOverExternal("GAME OVER\nUna nave fue destruida.");
         }
     }
 
