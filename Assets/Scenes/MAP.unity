@@ -2092,7 +2092,7 @@ Transform:
   m_GameObject: {fileID: 201598372}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.70710737, z: -0, w: 0.70710623}
-  m_LocalPosition: {x: 101.3996, y: 15, z: -254.65027}
+  m_LocalPosition: {x: 108.1, y: 15, z: -254.7}
   m_LocalScale: {x: 1.5, y: 50, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4515,7 +4515,7 @@ Transform:
   m_GameObject: {fileID: 371531396}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.70710576, z: -0, w: 0.70710784}
-  m_LocalPosition: {x: -14.199997, y: 0, z: -267.6}
+  m_LocalPosition: {x: 33.300095, y: 0, z: -270.27}
   m_LocalScale: {x: 22, y: 69.299995, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4535,8 +4535,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocalObstacleMove
   moveType: 0
   rotationAxis: 2
-  amplitude: 14
-  speed: 1
+  amplitude: 10
+  speed: 0.8
   rotationSpeed: 90
 --- !u!114 &371531399
 MonoBehaviour:
@@ -11142,10 +11142,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f418b811b161acd6b1d3fa7302e4e26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LocalObstacleMove
-  moveType: 3
-  rotationAxis: 2
-  amplitude: 13
-  speed: 0.8
+  moveType: 2
+  rotationAxis: 1
+  amplitude: 9
+  speed: 1
   rotationSpeed: 80
 --- !u!114 &945606918
 MonoBehaviour:
@@ -17739,13 +17739,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1612989196}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 377.3, y: 13.53, z: 167.8}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 377.3, y: 13.9, z: 167.8}
   m_LocalScale: {x: 1.5, y: 50, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 798561084}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!114 &1612989198
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17758,9 +17758,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f418b811b161acd6b1d3fa7302e4e26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LocalObstacleMove
-  moveType: 3
+  moveType: 2
   rotationAxis: 0
-  amplitude: 13
+  amplitude: 7
   speed: 0.8
   rotationSpeed: 70
 --- !u!114 &1612989199
@@ -18340,7 +18340,7 @@ Transform:
   m_GameObject: {fileID: 1680535841}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.70710576, z: -0, w: 0.70710784}
-  m_LocalPosition: {x: -14.2000885, y: 0, z: -240.13}
+  m_LocalPosition: {x: 33.3, y: 0, z: -242.8}
   m_LocalScale: {x: 22, y: 69.299995, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -18360,8 +18360,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocalObstacleMove
   moveType: 0
   rotationAxis: 2
-  amplitude: 14
-  speed: 1
+  amplitude: 10
+  speed: 0.8
   rotationSpeed: 90
 --- !u!114 &1680535844
 MonoBehaviour:
@@ -19341,7 +19341,7 @@ Transform:
   m_GameObject: {fileID: 1784437055}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0.0000020191071, z: 0.7071068, w: 0.0000020191071}
-  m_LocalPosition: {x: -80.9, y: 22.58, z: -253.5}
+  m_LocalPosition: {x: -58.7, y: 22.6, z: -253.5}
   m_LocalScale: {x: 41.799995, y: 16.5, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -19361,7 +19361,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocalObstacleMove
   moveType: 2
   rotationAxis: 2
-  amplitude: 35
+  amplitude: 25
   speed: 1
   rotationSpeed: 90
 --- !u!114 &1784437058
