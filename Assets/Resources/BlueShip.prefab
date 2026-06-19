@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 916602799575160018}
   - component: {fileID: 7593870549926786132}
   - component: {fileID: 4121651926786226087}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -183,7 +183,7 @@ GameObject:
   - component: {fileID: 5468268412321660246}
   - component: {fileID: 8773883101352765285}
   - component: {fileID: 5004633516878870223}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BlueShip
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -199,8 +199,8 @@ Transform:
   m_GameObject: {fileID: 2953252114489636426}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10.73, y: 2.56, z: -9.36}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 10.73, y: 4.69, z: -9.36}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4433113868935880248}
@@ -318,7 +318,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2953252114489636426}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4bf63f6ed306f154090358c972d66f87, type: 3}
   m_Name: 
@@ -340,7 +340,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b60b6160171548645bb87cf654b3256c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipHealth
-  maxHealth: 10
+  maxHealth: 5
   currentHealth: 0
 --- !u!114 &5020800769329739566
 MonoBehaviour:
@@ -349,7 +349,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2953252114489636426}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 05a4168004ddc7fa7a605ffafba60ad2, type: 3}
   m_Name: 

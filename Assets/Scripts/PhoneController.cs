@@ -30,13 +30,10 @@ public class PhoneController: MonoBehaviour
     {
         cam = GetComponent<Camera>();
         cam.orthographic = true;
-        transform.rotation = Quaternion.Euler(65f, 45f, 0f);
+        transform.rotation = Quaternion.Euler(90f, 0f, 0f); // vista cenital directa hacia abajo
 
-        // Candado de seguridad para que la cámara no nazca atrapada en el suelo
         if (transform.position.y <= 0.1f)
-        {
             transform.position = new Vector3(transform.position.x, 80f, transform.position.z);
-        }
     }
 
     // ========================================================
@@ -99,27 +96,50 @@ public class PhoneController: MonoBehaviour
         }
 
         // Si el usuario está haciendo zoom, congelamos el mapa para que no se mueva chueco
-        if (isZooming) return; 
+        if (isZooming) return;
 
         // ========================================================
-        // 2. LÓGICA DE ARRASTRE / PAN (1 Dedo en Celular o Clic Izquierdo en PC)
+        // 2a. PAN CON TECLADO (flechas) — PC
         // ========================================================
-        bool isClicking = hasMouse && Mouse.current.leftButton.isPressed;
+        if (Keyboard.current != null)
+        {
+            float panSpeed = cam.orthographicSize * 1.8f * Time.deltaTime;
+            Vector3 panDir = Vector3.zero;
+            if (Keyboard.current.upArrowKey.isPressed)    panDir.z += 1f;
+            if (Keyboard.current.downArrowKey.isPressed)  panDir.z -= 1f;
+            if (Keyboard.current.leftArrowKey.isPressed)  panDir.x -= 1f;
+            if (Keyboard.current.rightArrowKey.isPressed) panDir.x += 1f;
+
+            if (panDir != Vector3.zero)
+            {
+                Vector3 nuevaPos = transform.position + panDir * panSpeed;
+                nuevaPos.x = Mathf.Clamp(nuevaPos.x, minX, maxX);
+                nuevaPos.z = Mathf.Clamp(nuevaPos.z, minZ, maxZ);
+                transform.position = nuevaPos;
+            }
+        }
+
+        // ========================================================
+        // 2b. ARRASTRE / PAN (1 Dedo en Tablet  o  Click Derecho en PC)
+        // ========================================================
+        bool isClicking = hasMouse && Mouse.current.rightButton.isPressed; // click derecho para pan en PC
         bool isTouching = dedosActivos == 1;
 
-        // Detectar el instante en que pones el primer dedo o haces clic
-        bool empezoToque = (hasMouse && Mouse.current.leftButton.wasPressedThisFrame) ||
+        bool empezoToque = (hasMouse && Mouse.current.rightButton.wasPressedThisFrame) ||
                            (isTouching && Touch.activeTouches[0].phase == TouchPhase.Began);
-        
-        // Detectar cuando levantas el dedo o sueltas el mouse
-        bool terminoToque = (hasMouse && Mouse.current.leftButton.wasReleasedThisFrame) ||
+
+        bool terminoToque = (hasMouse && Mouse.current.rightButton.wasReleasedThisFrame) ||
                             (isTouching && Touch.activeTouches[0].phase == TouchPhase.Ended) ||
                             dedosActivos == 0;
 
         if (empezoToque)
         {
+            // En tablet (táctil): no arrastrar si el dedo está sobre un botón UI
+            if (isTouching && UnityEngine.EventSystems.EventSystem.current != null &&
+                UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+                return;
+
             Vector2 screenPos = isTouching ? Touch.activeTouches[0].screenPosition : Mouse.current.position.ReadValue();
-            
             if (TryObtenerPuntoEnPlano(screenPos, out Vector3 puntoEnMundo))
             {
                 isDragging = true;
@@ -128,27 +148,20 @@ public class PhoneController: MonoBehaviour
             }
         }
 
-        // Mientras arrastras el dedo por la pantalla horizontal de la tablet
         if (isDragging && (isClicking || isTouching))
         {
             Vector2 screenPos = isTouching ? Touch.activeTouches[0].screenPosition : Mouse.current.position.ReadValue();
-            
             if (TryObtenerPuntoEnPlano(screenPos, out Vector3 puntoActualMundo))
             {
                 Vector3 deltaMundo = puntoInicialMundo - puntoActualMundo;
                 Vector3 nuevaPos = posicionInicialCamara + deltaMundo;
-
-                // Clampear para que el Overlord no arrastre la pantalla hacia el vacío oscuro
                 nuevaPos.x = Mathf.Clamp(nuevaPos.x, minX, maxX);
                 nuevaPos.z = Mathf.Clamp(nuevaPos.z, minZ, maxZ);
                 transform.position = nuevaPos;
             }
         }
 
-        if (terminoToque)
-        {
-            isDragging = false;
-        }
+        if (terminoToque) isDragging = false;
     }
 
     // Raycast matemático seguro hacia el piso del laberinto (Y = 0)

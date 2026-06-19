@@ -1,164 +1,108 @@
 using UnityEngine;
-using UnityEngine.InputSystem;   // Para detectar la tecla R con el nuevo Input System
-using UnityEngine.SceneManagement; // Para reiniciar la escena con LoadScene
+using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
+using Photon.Pun;
 
-// GameManager.cs
-// Controla el estado global del juego: temporizador, fin de juego, y la UI en pantalla.
-// Es un Singleton: solo existe una instancia y se puede acceder desde cualquier script
-// usando GameManager.Instance
 public class GameManager : MonoBehaviour
 {
-    // Instancia unica accesible desde cualquier script (patron Singleton)
     public static GameManager Instance;
 
-    // Seccion visible en el Inspector para configurar la duracion del juego
-    [Header("Game Settings")]
-    public float gameDuration = 120f; // duracion total en segundos (2 minutos)
-
-    // Propiedad de solo lectura publica — otros scripts pueden leerla pero no cambiarla
-    // Si IsPlaying es false, la nave no se mueve y no puede recibir dano
     public bool IsPlaying { get; private set; }
 
-    // Tiempo restante en segundos (va bajando cada frame)
-    private float   _timeLeft;
-
-    // Mensaje que se muestra cuando termina el juego ("You survived!" o "Ship destroyed!")
-    private string  _endMessage = "";
-
-    // Referencia a la vida de la nave (para mostrar los corazones en pantalla)
     private ShipHealth _shipHealth;
+    private GUIStyle _hudStyle;
+    private bool _stylesInitialized = false;
+    private bool _gameEndedByDestroy = false;
 
-    // Estilos de texto para la UI — se inicializan una sola vez en InitStyles()
-    private GUIStyle _bigStyle; // temporizador grande arriba al centro
-    private GUIStyle _hudStyle; // corazones y texto de reinicio
-    private GUIStyle _endStyle; // mensaje de fin de juego
-
-    // Awake() se ejecuta antes que Start() — ideal para configurar el Singleton
     void Awake()
     {
-        // Guardar esta instancia para que otros scripts puedan acceder con GameManager.Instance
         Instance = this;
     }
 
-    // Start() se ejecuta al inicio del modo Play, una sola vez
     void Start()
     {
-        // Iniciar el temporizador con la duracion configurada en el Inspector
-        _timeLeft  = gameDuration;
-
-        // El juego empieza activo
-        IsPlaying  = true;
-
-        // Buscar automaticamente el componente ShipHealth en la escena
-        _shipHealth = FindFirstObjectByType<ShipHealth>();
+        if (ObjectiveManager.Instance == null)
+        {
+            var go = new GameObject("ObjectiveManager");
+            go.AddComponent<ObjectiveManager>();
+        }
+        IsPlaying = true;
     }
 
-    // Update() se ejecuta cada frame
     void Update()
     {
-        // Si el juego termino, solo escuchar la tecla R para reiniciar
-        if (!IsPlaying)
-        {
-            // Reiniciar la escena si el jugador presiona R
-            if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-            return; // no hacer nada mas si el juego termino
-        }
+        // Buscar la nave local una vez que Photon la haya spawneado
+        if (_shipHealth == null)
+            _shipHealth = FindMyShipHealth();
 
-        // Reducir el tiempo restante
-        _timeLeft -= Time.deltaTime;
+        if (IsPlaying) return;
 
-        // Si el tiempo llego a 0, el jugador sobrevivio
-        if (_timeLeft <= 0f)
-        {
-            _timeLeft = 0f; // no mostrar tiempo negativo
-            GameOver("You survived!"); // mensaje de victoria
-        }
+        if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    // Llamado por ShipHealth cuando la nave llega a 0 de vida,
-    // o por Update() cuando se acaba el tiempo
+    ShipHealth FindMyShipHealth()
+    {
+        foreach (var sh in FindObjectsByType<ShipHealth>(FindObjectsSortMode.None))
+        {
+            var pv = sh.GetComponentInParent<PhotonView>();
+            if (pv != null && pv.IsMine) return sh;
+        }
+        return null;
+    }
+
     public void GameOver(string message)
     {
-        IsPlaying   = false;   // detener el juego
-        _endMessage = message; // guardar el mensaje para mostrarlo en pantalla
-    }
+        IsPlaying = false;
+        _gameEndedByDestroy = true;
 
-    // OnGUI() dibuja la interfaz de usuario directamente en pantalla cada frame
-    // No necesita Canvas ni componentes UI — todo se dibuja con codigo
-    void OnGUI()
-    {
-        // Inicializar los estilos de texto la primera vez
-        InitStyles();
-
-        // Calcular minutos y segundos del tiempo restante
-        int mins   = Mathf.FloorToInt(_timeLeft / 60f);
-        int secs   = Mathf.FloorToInt(_timeLeft % 60f);
-
-        // Leer vida actual y vida maxima de la nave (o 0 si no hay nave)
-        int health = _shipHealth != null ? _shipHealth.currentHealth : 0;
-        int maxHp  = _shipHealth != null ? _shipHealth.maxHealth     : 5;
-
-        // Dibujar el temporizador centrado en la parte superior de la pantalla
-        // Formato: "01:45" (minutos:segundos con 2 digitos cada uno)
-        GUI.Label(new Rect(Screen.width / 2f - 70, 15, 140, 45), $"{mins:00}:{secs:00}", _bigStyle);
-
-        // Dibujar los corazones en la esquina inferior izquierda
-        // Corazon lleno (?) = vida disponible, corazon vacio (?) = vida perdida
-        string hearts = "";
-        for (int i = 0; i < maxHp; i++)
-            hearts += i < health ? "\u2665 " : "\u2661 ";
-        GUI.Label(new Rect(20, Screen.height - 50, 300, 40), hearts, _hudStyle);
-
-        // Mostrar pantalla de fin de juego si el juego termino
-        if (!IsPlaying && _endMessage != "")
+        // Notificar a TODOS los clientes: atacante gana (winnerResult=1).
+        // RpcTarget.All incluye esta misma máquina, así que no hace falta
+        // llamar a ObjectiveManager localmente por separado.
+        var spawner = FindFirstObjectByType<GameSpawnManager>();
+        if (spawner != null && spawner.photonView != null)
         {
-            // Calcular posicion centrada del cuadro de fin de juego
-            float bw = 420, bh = 180;
-            float bx = (Screen.width  - bw) / 2f;
-            float by = (Screen.height - bh) / 2f;
-
-            // Fondo oscuro del cuadro
-            GUI.Box(new Rect(bx - 10, by - 10, bw + 20, bh + 20), "");
-
-            // Mensaje principal: "You survived!" o "Ship destroyed!"
-            GUI.Label(new Rect(bx, by + 20, bw, 80),  _endMessage,        _endStyle);
-
-            // Instruccion de reinicio
-            GUI.Label(new Rect(bx, by + 110, bw, 40), "Press R to restart", _hudStyle);
+            spawner.photonView.RPC(
+                nameof(GameSpawnManager.RPC_GameOver), Photon.Pun.RpcTarget.All, 1);
+        }
+        else if (ObjectiveManager.Instance != null)
+        {
+            ObjectiveManager.Instance.isGameOver = true;
+            ObjectiveManager.Instance.NotifyGameOverExternal("GAME OVER\nUna nave fue destruida.");
         }
     }
 
-    // Inicializa los estilos de texto una sola vez (evita crearlos cada frame)
+    public void NotifyGameOver()
+    {
+        IsPlaying = false;
+    }
+
+    public void NotifyGameOverExternal(string message)
+    {
+        IsPlaying = false;
+    }
+
+    void OnGUI()
+    {
+        if (_shipHealth == null) return;
+        InitStyles();
+
+        string hearts = "";
+        for (int i = 0; i < _shipHealth.maxHealth; i++)
+            hearts += i < _shipHealth.currentHealth ? "\u2665 " : "\u2661 ";
+        GUI.Label(new Rect(20, Screen.height - 50, 300, 40), hearts, _hudStyle);
+    }
+
     void InitStyles()
     {
-        // Si ya fueron inicializados, no hacer nada
-        if (_bigStyle != null) return;
+        if (_stylesInitialized) return;
+        _stylesInitialized = true;
 
-        // Estilo para el temporizador grande
-        _bigStyle = new GUIStyle(GUI.skin.label)
-        {
-            fontSize  = 34,
-            fontStyle = FontStyle.Bold,
-            alignment = TextAnchor.MiddleCenter,
-            normal    = { textColor = Color.white }
-        };
-
-        // Estilo para los corazones y el texto de reinicio
         _hudStyle = new GUIStyle(GUI.skin.label)
         {
-            fontSize  = 26,
+            fontSize = 26,
             alignment = TextAnchor.MiddleCenter,
-            normal    = { textColor = new Color(1f, 0.3f, 0.3f) } // rojo-rosado
-        };
-
-        // Estilo para el mensaje de fin de juego
-        _endStyle = new GUIStyle(GUI.skin.label)
-        {
-            fontSize  = 38,
-            fontStyle = FontStyle.Bold,
-            alignment = TextAnchor.MiddleCenter,
-            normal    = { textColor = Color.yellow }
+            normal = { textColor = new Color(1f, 0.3f, 0.3f) }
         };
     }
 }

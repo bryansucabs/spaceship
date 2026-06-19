@@ -19,7 +19,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
 
     void Start()
     {
-        // Al cargar la escena, intentamos spawnear inmediatamente si la sala ya está completa
+        new GameObject("_LimiteMapa").AddComponent<LimiteMapa>();
         VerificarYSpawnear();
     }
     
@@ -33,70 +33,45 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
     private void VerificarYSpawnear()
     {
         if (yaNaci || !PhotonNetwork.InRoom) return;
-
-        int conectados = PhotonNetwork.CurrentRoom.PlayerCount;
-        int maximos = PhotonNetwork.CurrentRoom.MaxPlayers;
-
-        // Si estamos los 3 completos (o si estás probando tú solo en el editor)
-        if (conectados == maximos || conectados == 1)
-        {
-            yaNaci = true;
-            SpawnearMiRolAsimetrico();
-        }
+        yaNaci = true;
+        SpawnearMiRolAsimetrico();
     }
     
     void SpawnearMiRolAsimetrico()
     {
-        // Nos guiamos por el orden de la lista ordenada de Photon (PlayerList)
-        // Índice [0] -> Primer usuario en conectar (PC 1 - Mando Celular UDP)
-        // Índice [1] -> Segundo usuario en conectar (PC 2 - Teclado normal)
-        // Índice [2] -> Tercer usuario en conectar (Tablet / Celular del Overlord)
+        string miRol = "";
+        if (PhotonNetwork.LocalPlayer.CustomProperties.ContainsKey("rol"))
+            miRol = PhotonNetwork.LocalPlayer.CustomProperties["rol"].ToString();
 
-        // 1. EVALUAR SI SOY EL JUGADOR 1
-        if (PhotonNetwork.LocalPlayer.Equals(PhotonNetwork.PlayerList[0]))
+        if (miRol == "redship")
         {
             GameObject miNave = PhotonNetwork.Instantiate(redShipPrefab, spawnPointAzul.position, spawnPointAzul.rotation);
-            
             var controller = miNave.GetComponent<StarshipControllerPun>();
-            if (controller != null)
-            {
-                controller.esJugadorTeclado = false;
-                controller.autoavance = true;
-            }
-            
+            if (controller != null) { controller.esJugadorTeclado = false; controller.autoavance = false; controller.InitPlayerObjective(); }
             udpManager = miNave.GetComponent<UDPManagerPUN>();
-            if (udpManager != null && controller != null)
-            {
-                udpManager.nave = controller;
-            }
-            
-            Debug.Log("[SPAWN] ¡Yo soy el Jugador 1! Nací como RedShip (Mando Celular UDP).");
+            if (udpManager != null && controller != null) udpManager.nave = controller;
+            Debug.Log("[SPAWN] RedShip — control por celular UDP.");
         }
-        // 2. EVALUAR SI SOY EL JUGADOR 2
-        else if (PhotonNetwork.PlayerList.Length > 1 && PhotonNetwork.LocalPlayer.Equals(PhotonNetwork.PlayerList[1]))
+        else if (miRol == "blueship")
         {
             GameObject miNave = PhotonNetwork.Instantiate(blueShipPrefab, spawnPointRoja.position, spawnPointRoja.rotation);
-            
             var controller = miNave.GetComponent<StarshipControllerPun>();
-            if (controller != null)
-            {
-                controller.esJugadorTeclado = true;
-                controller.autoavance = false;
-            }
-            
-            Debug.Log("[SPAWN] ¡Yo soy el Jugador 2! Nací como BlueShip (Teclado).");
+            if (controller != null) { controller.esJugadorTeclado = true; controller.autoavance = false; controller.InitPlayerObjective(); }
+            Debug.Log("[SPAWN] BlueShip — control por teclado.");
         }
-        // 3. EVALUAR SI SOY EL JUGADOR 3 (El Overlord táctil)
-        else if (PhotonNetwork.PlayerList.Length > 2 && PhotonNetwork.LocalPlayer.Equals(PhotonNetwork.PlayerList[2]))
+        else if (miRol == "overlord")
         {
-            // El tercer dispositivo crea su cámara táctil e interfaz. 
-            // Esto NO se ejecuta en el Host, por lo que el Host jamás perderá su pantalla original.
-            PhotonNetwork.Instantiate(overlordPrefab, spawnPointOverlord.position, spawnPointOverlord.rotation);
-            Debug.Log("[SPAWN] ¡Yo soy el Jugador 3! Nací como el Overlord Táctil.");
+            Vector3 posOvl = spawnPointOverlord != null ? spawnPointOverlord.position : new Vector3(0f, 200f, 0f);
+            Quaternion rotOvl = spawnPointOverlord != null ? spawnPointOverlord.rotation : Quaternion.identity;
+            PhotonNetwork.Instantiate(overlordPrefab, posOvl, rotOvl);
+            Debug.Log("[SPAWN] Overlord — vista táctil aérea.");
 
-            // Si soy el Host cierro la sala, si no, le pido amablemente al master que lo haga
             if (PhotonNetwork.IsMasterClient) FinalizarLobby();
             else photonView.RPC("RPC_FinalizarLobby", RpcTarget.MasterClient);
+        }
+        else
+        {
+            Debug.LogWarning("[SPAWN] Sin rol asignado — el jugador no eligió nave en el lobby.");
         }
     }
 
@@ -111,5 +86,77 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
         PhotonNetwork.CurrentRoom.IsOpen = false;
         PhotonNetwork.CurrentRoom.IsVisible = false;
         Debug.Log("[Lobby] Sala cerrada con éxito por seguridad de juego.");
+    }
+
+    // ── RPCs de sabotaje del Overlord ─────────────────────────────────────────
+    // GameSpawnManager vive en la raíz de la escena MAP con su propio PhotonView.
+    // PUN2 encuentra estos métodos correctamente porque el PhotonView está en el
+    // mismo GameObject que GameSpawnManager (no en un hijo).
+
+    [PunRPC]
+    public void RPC_IniciarSabotaje(float duracion)
+    {
+        foreach (var door in FindObjectsByType<DoorTrigger>(FindObjectsSortMode.None))
+            door.ForzarCerrar();
+        foreach (var alerta in FindObjectsByType<ShipSabotageAlert>(FindObjectsSortMode.None))
+            alerta.MostrarAlerta(duracion);
+        var go = new GameObject("_SabotajeTimer");
+        DontDestroyOnLoad(go);
+        go.AddComponent<SabotajeTimerAuxiliar>().Iniciar(duracion);
+    }
+
+    [PunRPC]
+    public void RPC_IniciarFreno(float duracion)
+    {
+        foreach (var alerta in FindObjectsByType<ShipSabotageAlert>(FindObjectsSortMode.None))
+            alerta.MostrarAlertaRelentizar(duracion);
+        var go = new GameObject("_FrenosTimer");
+        DontDestroyOnLoad(go);
+        go.AddComponent<FrenosTimerAuxiliar>().Iniciar(duracion);
+    }
+
+    [PunRPC]
+    public void RPC_RomperPasadizo(string nombre)
+    {
+        var go = new GameObject("_RotadorPasadizo");
+        go.AddComponent<PasadizoRotadorAuxiliar>().Iniciar(nombre, 80f, 2.5f);
+    }
+
+    // ── RPCs del sistema de objetivos (ObjectiveManager) ─────────────────────
+
+    [PunRPC]
+    public void RPC_SyncObjective(string role, int objectiveInt)
+    {
+        if (ObjectiveManager.Instance == null) return;
+        ObjectiveManager.Instance.ApplyObjectiveChange(role, (ShipObjective)objectiveInt);
+    }
+
+    [PunRPC]
+    public void RPC_GameOver(int winnerResult)
+    {
+        if (ObjectiveManager.Instance == null) return;
+        ObjectiveManager.Instance.isGameOver = true;
+        ObjectiveManager.Instance.winner = winnerResult;
+        ObjectiveManager.Instance.SetEndMessageForRole(winnerResult);
+    }
+}
+
+// Esfera invisible que rodea todo el mapa. Si una nave escapa por cualquier hueco
+// (por ejemplo la juntura del pasadizo girado), la atrapa y la regresa adentro.
+public class LimiteMapa : MonoBehaviour
+{
+    void Awake()
+    {
+        var col = gameObject.AddComponent<SphereCollider>();
+        col.radius = 350f;
+        col.isTrigger = true;
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        var rb = other.attachedRigidbody;
+        if (rb == null) return;
+        Vector3 dir = (transform.position - other.transform.position).normalized;
+        rb.linearVelocity = dir * Mathf.Max(rb.linearVelocity.magnitude, 30f);
     }
 }

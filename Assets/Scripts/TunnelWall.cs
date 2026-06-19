@@ -98,7 +98,6 @@ public class TunnelWall : MonoBehaviour
         {
             _lastHit = Time.time;
             SparkEffect.Spawn(bestClosest, _inwardNormal);
-            _ship.TakeDamage(damage);
             SoundBank.Instance?.PlayPared();
         }
     }
