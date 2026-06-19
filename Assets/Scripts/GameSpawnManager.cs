@@ -128,11 +128,7 @@ public class GameSpawnManager : MonoBehaviourPunCallbacks
     public void RPC_SyncObjective(string role, int objectiveInt)
     {
         if (ObjectiveManager.Instance == null) return;
-        ShipObjective obj = (ShipObjective)objectiveInt;
-        if (role == "redship")
-            ObjectiveManager.Instance.redShipObjective = obj;
-        else if (role == "blueship")
-            ObjectiveManager.Instance.blueShipObjective = obj;
+        ObjectiveManager.Instance.ApplyObjectiveChange(role, (ShipObjective)objectiveInt);
     }
 
     [PunRPC]

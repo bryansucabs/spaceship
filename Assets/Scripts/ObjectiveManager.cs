@@ -29,6 +29,7 @@ public class ObjectiveManager : MonoBehaviourPunCallbacks
 
     private float _timeLeft;
     private string _endMessage = "";
+    private string _mensajeEspera = "";
 
     private float _lobbyCountdown = 5f;
     private bool _goingToLobby = false;
@@ -92,19 +93,38 @@ public class ObjectiveManager : MonoBehaviourPunCallbacks
 
     public void UpdateObjective(string role, ShipObjective objective)
     {
-        if (role == "redship") redShipObjective = objective;
-        else if (role == "blueship") blueShipObjective = objective;
-
-        // Cualquier nave que llegue a su destino = victoria de jugadores
-        if (redShipObjective == ShipObjective.Completed || blueShipObjective == ShipObjective.Completed)
-        {
-            DeclareP1P2Victory();
-            return;
-        }
+        ApplyObjectiveChange(role, objective);
 
         var pv = GetSpawnerPV();
         if (pv != null && pv.IsMine)
             pv.RPC(nameof(GameSpawnManager.RPC_SyncObjective), RpcTarget.Others, role, (int)objective);
+    }
+
+    // Aplica el cambio de objetivo y evalúa victoria/espera.
+    // Se llama local (desde UpdateObjective) Y en los otros clientes (desde RPC_SyncObjective).
+    public void ApplyObjectiveChange(string role, ShipObjective objective)
+    {
+        if (role == "redship") redShipObjective = objective;
+        else if (role == "blueship") blueShipObjective = objective;
+
+        if (isGameOver) return;
+
+        bool redDone  = redShipObjective  == ShipObjective.Completed;
+        bool blueDone = blueShipObjective == ShipObjective.Completed;
+
+        if (redDone && blueDone)
+        {
+            // Solo el master client dispara el RPC de victoria para evitar duplicados
+            var pv = GetSpawnerPV();
+            if (pv != null && pv.IsMine)
+                DeclareP1P2Victory();
+            return;
+        }
+
+        if (redDone)
+            _mensajeEspera = "Nave roja llegó al destino\n¡Esperando nave azul!";
+        else if (blueDone)
+            _mensajeEspera = "Nave azul llegó al destino\n¡Esperando nave roja!";
     }
 
     void DeclareP1P2Victory()
@@ -177,6 +197,16 @@ public class ObjectiveManager : MonoBehaviourPunCallbacks
 
         _timerStyle.normal.textColor = _timeLeft <= 30f ? Color.red : Color.white;
         GUI.Label(new Rect(Screen.width / 2f - 70, 15, 140, 45), $"{mins:00}:{secs:00}", _timerStyle);
+
+        // Mensaje de espera: una nave llegó pero la otra todavía no
+        if (!string.IsNullOrEmpty(_mensajeEspera) && !isGameOver)
+        {
+            float mw = 540, mh = 90;
+            float mx = (Screen.width  - mw) / 2f;
+            float my = (Screen.height - mh) / 2f - 100f;
+            GUI.Box(new Rect(mx - 10, my - 10, mw + 20, mh + 20), "");
+            GUI.Label(new Rect(mx, my, mw, mh), _mensajeEspera, _endStyle);
+        }
 
         if (isGameOver)
         {
