@@ -17,7 +17,7 @@ public class OverlordHUD : MonoBehaviourPun
     GameObject marcadorAzul;
 
     Canvas canvasHUD;
-    Button btnRoja, btnAzul, btnGeneral;
+    Button btnGeneral;
 
     // ── IMPOSTOR ──────────────────────────────────────────────────────────────
     enum ImpostorEstado { Listo, Activo, Enfriamiento }
@@ -83,8 +83,8 @@ public class OverlordHUD : MonoBehaviourPun
         // El componente sigue vivo para recibir RPCs.
         if (!photonView.IsMine) return;
         CrearCanvasHUD();
-        CrearMarcadorNave(ref marcadorRojo, "▲ NAVE ROJA",  new Color(1f, 0.2f, 0.2f));
-        CrearMarcadorNave(ref marcadorAzul, "▲ NAVE AZUL",  new Color(0.3f, 0.6f, 1f));
+        CrearMarcadorNave(ref marcadorRojo, "▲ NAVE ROJA",  new Color(0.9f, 0f,   0f  ));
+        CrearMarcadorNave(ref marcadorAzul, "▲ NAVE AZUL",  new Color(0f,   0.1f, 1f  ));
     }
 
     void Start()
@@ -530,18 +530,12 @@ public class OverlordHUD : MonoBehaviourPun
 
         var panel = CrearImagen(goCanvas.transform, "Panel",
             new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-            new Vector2(0f, 0f), new Vector2(780f, 70f),
+            new Vector2(0f, 0f), new Vector2(260f, 70f),
             new Color(0f, 0f, 0f, 0.6f));
 
-        btnRoja    = CrearBoton(panel.transform, "BtnRoja",    "🔴  Nave Roja",
-            new Vector2(-260f, 35f), new Vector2(220f, 55f), new Color(0.55f, 0.05f, 0.05f, 1f));
-        btnAzul    = CrearBoton(panel.transform, "BtnAzul",    "🔵  Nave Azul",
-            new Vector2(0f,    35f), new Vector2(220f, 55f), new Color(0.1f,  0.2f,  0.65f, 1f));
-        btnGeneral = CrearBoton(panel.transform, "BtnGeneral", "🗺  Vista General",
-            new Vector2(260f,  35f), new Vector2(220f, 55f), new Color(0.15f, 0.35f, 0.15f, 1f));
+        btnGeneral = CrearBoton(panel.transform, "BtnGeneral", "Vista General",
+            new Vector2(0f, 35f), new Vector2(220f, 55f), new Color(0.15f, 0.35f, 0.15f, 1f));
 
-        btnRoja.onClick.AddListener(IrNaveRoja);
-        btnAzul.onClick.AddListener(IrNaveAzul);
         btnGeneral.onClick.AddListener(VistaGeneral);
     }
 
