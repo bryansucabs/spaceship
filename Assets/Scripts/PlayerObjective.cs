@@ -66,7 +66,7 @@ public class PlayerObjective : MonoBehaviourPun
                 SetObj(ShipObjective.StandInCircle);
             }
             // ZONA DE EXTRACCIÓN REDSHIP
-            else if (_obj == ShipObjective.GoToExtraction && zoneName.Contains("MetaRed"))
+            else if (zoneName.Contains("MetaRed"))
             {
                 SetObj(ShipObjective.Completed);
             }
